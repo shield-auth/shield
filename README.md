@@ -29,5 +29,5 @@
 </p>
 <!-- markdownlint-restore -->
 
-# shield
-The rust based IAM backend
+# Shield 🛡️
+The **Rust** based **Open Source Identity and Access Management** (Inspired by [Keycloak](https://www.keycloak.org))
