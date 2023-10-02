@@ -3,7 +3,7 @@ extern crate rocket;
 
 #[get("/")]
 fn index() -> &'static str {
-    "Jai Shree Ram!"
+    "Hello World! I'm Shield"
 }
 
 #[shuttle_runtime::main]
