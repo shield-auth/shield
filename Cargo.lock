@@ -1682,6 +1682,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-shield"
+version = "0.1.0"
+dependencies = [
+ "rocket",
+ "shuttle-rocket",
+ "shuttle-runtime",
+ "tokio",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1858,16 +1868,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1b21f559e07218024e7e9f90f96f601825397de0e25420135f7f952453fed0b"
 dependencies = [
  "lazy_static",
-]
-
-[[package]]
-name = "shield"
-version = "0.1.0"
-dependencies = [
- "rocket",
- "shuttle-rocket",
- "shuttle-runtime",
- "tokio",
 ]
 
 [[package]]
