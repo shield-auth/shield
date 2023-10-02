@@ -12,8 +12,8 @@
   <a href="https://docs.rs/rust-shield">
     <img alt="crate-docs" src="https://img.shields.io/badge/docs-docs.rs-orange">
   </a>
-  <a href="https://circleci.com/gh/shuttle-hq/shuttle/">
-    <img alt="build status" src="https://circleci.com/gh/shuttle-hq/shuttle.svg?style=shield"/>
+  <a href="https://circleci.com/gh/RustSea/shield">
+    <img alt="build status" src="https://circleci.com/gh/RustSea/shield.svg?style=shield"/>
   </a>
 </p>
 <p align="center">
