@@ -11,7 +11,7 @@ readme = "README.md"
 repository = "https://github.com/rustsea/shield/"
 
 [dependencies]
-rocket = "0.5.0-rc.3"
-shuttle-rocket = "0.27.0"
-shuttle-runtime = "0.27.0"
-tokio = "1.32.0"
+rocket = "0.5.0-rc.2"
+shuttle-rocket = "0.28.0"
+shuttle-runtime = "0.28.0"
+tokio = "1.26.0"
