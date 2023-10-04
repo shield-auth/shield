@@ -15,7 +15,6 @@ async fn rocket() -> shuttle_rocket::ShuttleRocket {
         .mount("/", routes![index])
         .mount(&get_path(&RouteKey::Organisations), routes![org_index])
         .mount(&get_path(&RouteKey::Projects), routes![project_index]);
-
     Ok(rocket.into())
 }
 
