@@ -3,7 +3,7 @@ use std::collections::HashMap;
 #[derive(Eq, Hash, PartialEq)]
 pub enum RouteKey {
     Organisations,
-    Projects
+    Projects,
 }
 
 pub fn get_routes() -> HashMap<RouteKey, String> {
