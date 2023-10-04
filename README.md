@@ -1,19 +1,19 @@
 <p align="center">
-<img style="border-radius: 100%; height: 150px; width: 150px;" width="300" src="https://avatars.githubusercontent.com/u/146738056?s=400&u=b522593c40f58d23186890a52cf989a904ee130c&v=4" alt="RustSea Logo"/>
+<img style="border-radius: 100%; height: 150px; width: 150px;" width="300" src="https://avatars.githubusercontent.com/u/146738056?s=400&u=b522593c40f58d23186890a52cf989a904ee130c&v=4" alt="Shield Logo"/>
 </p>
 <br>
 <p align="center">
-  <a href="https://github.com/RustSea/shield/search?l=rust">
+  <a href="https://github.com/AutomationTank/shield/search?l=rust">
     <img alt="language" src="https://img.shields.io/badge/language-Rust-orange.svg">
   </a>
-  <a href="https://shield-docs.RustSea.com/">
-    <img alt="docs" src="https://img.shields.io/badge/docs-shield.RustSea.com-cyan">
+  <a href="https://docs.shield.rs/">
+    <img alt="docs" src="https://img.shields.io/badge/🛡️-docs.shield.rs-cyan">
   </a>
   <a href="https://docs.rs/rust-shield">
-    <img alt="crate-docs" src="https://img.shields.io/badge/docs-docs.rs-orange">
+    <img alt="crate-docs" src="https://img.shields.io/badge/docs-docs.rs-orange?logo=rust">
   </a>
-  <a href="https://circleci.com/gh/RustSea/shield">
-    <img alt="build status" src="https://circleci.com/gh/RustSea/shield.svg?style=shield"/>
+  <a href="https://circleci.com/gh/AutomationTank/shield">
+    <img alt="build status" src="https://circleci.com/gh/AutomationTank/shield.svg?style=shield"/>
   </a>
 </p>
 <p align="center">
