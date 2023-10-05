@@ -1,17 +1,10 @@
 [package]
-name = "rust-shield"
+name = "shield"
 version = "0.1.0"
 edition = "2021"
-license = "MIT AND Apache-2.0"
-description = "This is going to be an IAM system. Just reserving the name for time being."
-documentation = "https://shield-docs.rustsea.com"
-homepage = "https://www.rustsea.com/shield"
-keywords = ["auth", "iam-provider", "identity-and-access", "idp"]
-readme = "README.md"
-repository = "https://github.com/rustsea/shield/"
 
 [dependencies]
-rocket = "0.5.0-rc.3"
-shuttle-rocket = "0.28.0"
+actix-web = "4.3.1"
+shuttle-actix-web = "0.28.0"
 shuttle-runtime = "0.28.0"
-tokio = "1.32.0"
+tokio = "1.26.0"
