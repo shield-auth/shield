@@ -1,3 +1,2 @@
-mod controller;
-
-pub use controller::{index};
+pub mod controller;
+pub mod factory;
