@@ -1,21 +1,27 @@
-use actix_web::{get, web::{ServiceConfig, scope}};
-use shuttle_actix_web::ShuttleActixWeb;
-use crate::organisation::factory::organisation_factory;
+#[macro_use]
+extern crate rocket;
+mod constants;
+mod organization;
 
-mod organisation;
-mod project;
+use organization::org_routes;
 
-#[get("")]
-async fn hello_world() -> &'static str {
-    "Hello World! It's your Shield"
+#[get("/")]
+fn index() -> &'static str {
+    "Hi! It's your Shield"
 }
 
-#[shuttle_runtime::main]
-async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
-    let config = move |cfg: &mut ServiceConfig| {
-        cfg.service(scope("/").service(hello_world))
-            .service(scope("/organisations").service(organisation_factory()));
-    };
-
-    Ok(config.into())
+#[launch]
+fn rocket() -> _ {
+    rocket::build()
+        .mount("/", routes![index])
+        .mount("/organizations", org_routes())
 }
+
+// #[shuttle_runtime::main]
+// async fn rocket() -> shuttle_rocket::ShuttleRocket {
+//     let rocket = rocket::build()
+//         .mount("/", routes![index])
+//         .mount("/organizations", org_routes());
+
+//     Ok(rocket.into())
+// }
