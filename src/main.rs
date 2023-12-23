@@ -1,31 +1,27 @@
-mod constants;
-mod routes;
-mod organisation;
-mod project;
-
-use routes::{get_routes, RouteKey};
-use organisation::{index as org_index};
-use project::{index as project_index};
-
 #[macro_use]
 extern crate rocket;
+mod constants;
+mod organization;
 
-#[shuttle_runtime::main]
-async fn rocket() -> shuttle_rocket::ShuttleRocket {
-    let rocket = rocket::build()
-        .mount("/", routes![index])
-        .mount(&get_path(&RouteKey::Organisations), routes![org_index])
-        .mount(&get_path(&RouteKey::Projects), routes![project_index]);
-
-    Ok(rocket.into())
-}
+use organization::org_routes;
 
 #[get("/")]
 fn index() -> &'static str {
-    "Hello World! It's your Shield"
+    "Hi! It's your Shield"
 }
 
-fn get_path(route: &RouteKey) -> String {
-    let routes_map = get_routes();
-    routes_map.get(route).map(|s|s.to_string()).expect("Route not found")
+#[launch]
+fn rocket() -> _ {
+    rocket::build()
+        .mount("/", routes![index])
+        .mount("/organizations", org_routes())
 }
+
+// #[shuttle_runtime::main]
+// async fn rocket() -> shuttle_rocket::ShuttleRocket {
+//     let rocket = rocket::build()
+//         .mount("/", routes![index])
+//         .mount("/organizations", org_routes());
+
+//     Ok(rocket.into())
+// }
