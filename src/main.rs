@@ -25,18 +25,3 @@ fn rocket() -> _ {
 
 //     Ok(rocket.into())
 // }
-#[launch]
-fn rocket() -> _ {
-    rocket::build()
-        .mount("/", routes![index])
-        .mount("/organizations", org_routes())
-}
-
-// #[shuttle_runtime::main]
-// async fn rocket() -> shuttle_rocket::ShuttleRocket {
-//     let rocket = rocket::build()
-//         .mount("/", routes![index])
-//         .mount("/organizations", org_routes());
-
-//     Ok(rocket.into())
-// }
