@@ -1,6 +1,6 @@
 #[macro_use]
 extern crate rocket;
-mod constants;
+
 mod organization;
 
 use organization::org_routes;
