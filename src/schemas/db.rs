@@ -1,14 +1,8 @@
 // @generated automatically by Diesel CLI.
 
-pub mod sql_types {
-    #[derive(diesel::query_builder::QueryId, Clone, diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "role_type"))]
-    pub struct RoleType;
-}
-
 diesel::table! {
     account (provider, provider_account_id) {
-        user_id -> Text,
+        user_id -> Int4,
         #[sql_name = "type"]
         type_ -> Text,
         provider -> Text,
@@ -28,13 +22,25 @@ diesel::table! {
 diesel::table! {
     authenticator (user_id, credential_id) {
         credential_id -> Text,
-        user_id -> Text,
+        user_id -> Int4,
         provider_account_id -> Text,
         credential_public_key -> Text,
         counter -> Int4,
         credential_device_type -> Text,
         credential_backed_up -> Bool,
         transports -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    client (id) {
+        id -> Int4,
+        name -> Text,
+        two_factor_enabled_at -> Nullable<Timestamp>,
+        locked_at -> Nullable<Timestamp>,
+        realm_id -> Nullable<Int4>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -47,12 +53,39 @@ diesel::table! {
 }
 
 diesel::table! {
+    realm (id) {
+        id -> Int4,
+        name -> Text,
+        slug -> Text,
+        locked_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     resource (id) {
         id -> Int4,
-        user_id -> Text,
+        group_id -> Nullable<Int4>,
         name -> Text,
         value -> Text,
+        description -> Nullable<Text>,
+        locked_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    resource_group (id) {
+        id -> Int4,
+        realm_id -> Nullable<Int4>,
+        client_id -> Nullable<Int4>,
+        user_id -> Int4,
+        name -> Text,
+        description -> Nullable<Text>,
         is_default -> Nullable<Bool>,
+        locked_at -> Nullable<Timestamp>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -61,7 +94,7 @@ diesel::table! {
 diesel::table! {
     session (session_token) {
         session_token -> Text,
-        user_id -> Text,
+        user_id -> Int4,
         expires -> Timestamp,
         created_at -> Timestamp,
         updated_at -> Timestamp,
@@ -85,27 +118,18 @@ diesel::table! {
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::RoleType;
-
     user (id) {
-        id -> Text,
-        name -> Nullable<Text>,
-        first_name -> Nullable<Text>,
+        id -> Int4,
+        first_name -> Text,
         last_name -> Nullable<Text>,
         email -> Text,
-        email_verified -> Nullable<Timestamp>,
+        email_verified_at -> Nullable<Timestamp>,
         image -> Nullable<Text>,
-        is_two_factor_enabled -> Nullable<Bool>,
-        password -> Nullable<Text>,
+        two_factor_enabled_at -> Nullable<Timestamp>,
+        password_hash -> Nullable<Text>,
         is_temp_password -> Nullable<Bool>,
-        is_active -> Nullable<Bool>,
-        app_user_id -> Text,
-        role -> RoleType,
-        society_id -> Nullable<Text>,
-        membership_id -> Nullable<Text>,
-        employee_id -> Nullable<Text>,
-        is_multiple_membership -> Nullable<Bool>,
+        locked_at -> Nullable<Timestamp>,
+        realm_id -> Nullable<Int4>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -121,14 +145,22 @@ diesel::table! {
 
 diesel::joinable!(account -> user (user_id));
 diesel::joinable!(authenticator -> user (user_id));
-diesel::joinable!(resource -> user (user_id));
+diesel::joinable!(client -> realm (realm_id));
+diesel::joinable!(resource -> resource_group (group_id));
+diesel::joinable!(resource_group -> client (client_id));
+diesel::joinable!(resource_group -> realm (realm_id));
+diesel::joinable!(resource_group -> user (user_id));
 diesel::joinable!(session -> user (user_id));
+diesel::joinable!(user -> realm (realm_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     account,
     authenticator,
+    client,
     password_reset_token,
+    realm,
     resource,
+    resource_group,
     session,
     two_factor_confirmation,
     two_factor_token,
