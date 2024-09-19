@@ -1,21 +1,19 @@
-use diesel::{
-    r2d2::{ConnectionManager, Pool},
-    PgConnection,
-};
+use std::time::Duration;
+
+use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
 
 use super::settings::SETTINGS;
 
 pub struct AppState {
-    pub pool: Pool<ConnectionManager<PgConnection>>,
+    pub db: DatabaseConnection,
 }
 
-pub fn get_connection_pool() -> AppState {
-    let url = &SETTINGS.database.uri;
-    let manager = ConnectionManager::<PgConnection>::new(url);
-    let pool = Pool::builder()
-        .test_on_check_out(true)
-        .build(manager)
-        .expect("Could not build connection pool.");
+pub async fn get_db_connection_pool() -> Result<AppState, DbErr> {
+    let uri = &SETTINGS.database.uri;
+    let mut opts = ConnectOptions::new(uri);
+    opts.max_connections(20).connect_timeout(Duration::from_secs(5));
 
-    AppState { pool }
+    let db = Database::connect(opts).await?;
+
+    Ok(AppState { db })
 }

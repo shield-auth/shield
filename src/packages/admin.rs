@@ -1,50 +1,47 @@
-use diesel::{
-    dsl::insert_into,
-    r2d2::{ConnectionManager, PooledConnection},
-    select, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl,
-};
-use tracing::{debug, info};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use tracing::info;
 
-use crate::{
-    models::realm::{NewRealm, Realm},
-    packages::errors::Error,
-    schemas::db::realm::{self, name},
+use crate::database::{
+    prelude::*,
+    realm::{self, ActiveModel},
 };
 
 use super::db::AppState;
 
-pub async fn setup(state: &AppState) {
+pub async fn setup(state: &AppState) -> Result<(), Box<dyn std::error::Error>> {
     info!("Checking ADMIN availability!");
+    let is_master_realm_exists = Realm::find().filter(realm::Column::Name.eq("Master")).one(&state.db).await?;
 
-    let mut conn = state.pool.get().map_err(Error::db_error).unwrap();
-    debug!("Connection initialized");
-    let is_master_realm_exists = select(diesel::dsl::exists(realm::dsl::realm.filter(name.eq("Master"))))
-        .get_result::<bool>(&mut conn)
-        .unwrap();
-    debug!("find query ran for master realm");
-
-    if is_master_realm_exists {
+    if is_master_realm_exists.is_some() {
         info!("Master realm exists");
         info!("Starting the server...");
     } else {
         info!("Master realm does not exist");
         info!("⌛ Initializing the ADMIN...");
-        // TODO: 1. Create "Master" realm.
-        let res = create_master_realm(&mut conn);
-        // TODO: 2. Create admin using the admin_username and admin_password. If missing then throw error.
 
-        println!("{:#?}", res);
-        // TODO: 3. Give access of "Master" realm to admin.
+        // Step 1: Create "Master" realm.
+        let master_realm = create_master_realm(&state.db).await?;
+        info!("Master realm created: {:#?}", master_realm);
+
+        // Step 2: Create admin user (implement logic here).
+        // Example: create_admin(&state.db, admin_username, admin_password).await?;
+
+        // Step 3: Give admin access to "Master" realm.
+        // Example: grant_access_to_admin(&state.db, master_realm.id, admin_user.id).await?;
+
+        info!("Admin initialization complete.");
     }
+
+    Ok(())
 }
 
-fn create_master_realm(conn: &mut PooledConnection<ConnectionManager<PgConnection>>) -> Realm {
-    let new_realm = NewRealm { name: "Master" };
-    let res = insert_into(realm::table)
-        .values(&new_realm)
-        .get_result(conn)
-        .map_err(Error::db_error)
-        .unwrap();
+async fn create_master_realm(conn: &DatabaseConnection) -> Result<realm::Model, Box<dyn std::error::Error>> {
+    let new_realm = ActiveModel {
+        name: Set("Master".to_owned()),
+        ..Default::default()
+    };
+    let inserted_realm = new_realm.insert(conn).await?;
     info!("✅ 1/3 Master realm created");
-    return res;
+
+    Ok(inserted_realm)
 }

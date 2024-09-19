@@ -1,16 +1,16 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::net::SocketAddr;
 
 use app::create_app;
-use packages::{settings::SETTINGS, shutdown::shutdown_signal_handler};
-use tokio::{net::TcpListener, sync::Notify};
+use packages::settings::SETTINGS;
+use tokio::net::TcpListener;
 use tracing::info;
 
 mod app;
+mod database;
 mod handlers;
-mod models;
+mod middleware;
 mod packages;
 mod routes;
-mod schemas;
 mod utils;
 
 #[tokio::main]
@@ -23,14 +23,5 @@ async fn main() -> Result<(), std::io::Error> {
 
     info!("Server is listening on {}", &address);
 
-    let shutdown_signal = Arc::new(Notify::new());
-    let shutdown_signal_clone = shutdown_signal.clone();
-    ctrlc::set_handler(move || {
-        shutdown_signal_clone.notify_one();
-    })
-    .expect("Error setting Ctrl+C handler");
-
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal_handler(shutdown_signal))
-        .await
+    axum::serve(listener, app).await
 }
