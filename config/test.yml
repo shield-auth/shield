@@ -1,0 +1,8 @@
+environment: test
+server:
+  port: 8088
+database:
+  uri: "postgres://postgres:1234@localhost:5432/shield-test"
+  name: shield-test
+logger:
+  level: error
