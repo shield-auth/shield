@@ -15,7 +15,7 @@ pub async fn create_app() -> Router {
     logger::setup();
     let state = get_db_connection_pool().await.unwrap();
 
-    admin::setup(&state).await;
+    admin::setup(&state).await.expect("Failed to setup admin account");
     Router::new()
         .with_state(Arc::new(state))
         .merge(routes::create_routes())
