@@ -9,5 +9,5 @@ auth:
 logger:
   level: debug
 admin:
-  username: admin
+  email: admin@admin.com
   password: 12345

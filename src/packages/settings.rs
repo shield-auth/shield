@@ -24,7 +24,7 @@ pub struct Database {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Admin {
-    pub username: String,
+    pub email: String,
     pub password: String,
 }
 
@@ -56,8 +56,8 @@ impl Settings {
         if let Ok(database_uri) = env::var("DATABASE_URL") {
             builder = builder.set_override("database.uri", database_uri)?;
         }
-        if let Ok(admin_username) = env::var("ADMIN_USERNAME") {
-            builder = builder.set_override("admin.username", admin_username)?;
+        if let Ok(admin_email) = env::var("ADMIN_USERNAME") {
+            builder = builder.set_override("admin.email", admin_email)?;
         }
         if let Ok(admin_password) = env::var("ADMIN_PASSWORD") {
             builder = builder.set_override("admin.password", admin_password)?;

@@ -2,6 +2,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use bcrypt::BcryptError;
+use sea_orm::DbErr;
 use serde_json::json;
 use tokio::task::JoinError;
 
@@ -54,8 +55,11 @@ impl Error {
         Error::NotFound(NotFound {})
     }
 
-    pub fn db_error<E>(_: E) -> Self {
-        Error::DatabaseError(DatabaseError {})
+    pub fn db_error<E>(err: E) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        Error::DatabaseError(DatabaseError(Box::new(err)))
     }
 
     pub fn internal_error<E>(err: E) -> (StatusCode, String)
@@ -100,5 +104,11 @@ pub struct BadRequest {}
 pub struct NotFound {}
 
 #[derive(thiserror::Error, Debug)]
-#[error("Database error")]
-pub struct DatabaseError {}
+#[error("Database error: {0}")]
+pub struct DatabaseError(#[from] Box<dyn std::error::Error + Send + Sync>);
+
+impl From<DbErr> for Error {
+    fn from(err: DbErr) -> Self {
+        Error::DatabaseError(DatabaseError(Box::new(err)))
+    }
+}
