@@ -1,6 +1,26 @@
+CREATE OR REPLACE FUNCTION uuid_generate_v7 () RETURNS uuid AS $$
+BEGIN
+  -- use random v4 uuid as starting point (which has the same variant we need)
+  -- then overlay timestamp
+  -- then set version 7 by flipping the 2 and 1 bit in the version 4 string
+  return encode(
+    set_bit(
+      set_bit(
+        overlay(uuid_send(gen_random_uuid())
+                placing substring(int8send(floor(extract(epoch from clock_timestamp()) * 1000)::bigint) from 3)
+                from 1 for 6
+        ),
+        52, 1
+      ),
+      53, 1
+    ),
+    'hex')::uuid;
+END
+$$ LANGUAGE plpgsql volatile;
+
 -- Create realms table
 CREATE TABLE realm (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     name TEXT NOT NULL UNIQUE,
     slug TEXT NOT NULL UNIQUE,
     locked_at TIMESTAMP,
@@ -24,11 +44,11 @@ EXECUTE FUNCTION generate_slug();
 
 -- Create clients table
 CREATE TABLE client (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     name TEXT NOT NULL,
     two_factor_enabled_at TIMESTAMP,
     locked_at TIMESTAMP,
-    realm_id INTEGER REFERENCES realm(id) ON DELETE CASCADE,
+    realm_id UUID NOT NULL REFERENCES realm(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP)
@@ -39,7 +59,7 @@ CREATE INDEX idx_client_realm_locked ON client (realm_id, locked_at);
 
 -- Create users table
 CREATE TABLE "user" (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     first_name TEXT NOT NULL,
     last_name TEXT,
     email TEXT NOT NULL,
@@ -49,7 +69,7 @@ CREATE TABLE "user" (
     password_hash TEXT,
     is_temp_password BOOLEAN DEFAULT TRUE,
     locked_at TIMESTAMP,
-    realm_id INTEGER REFERENCES realm(id) ON DELETE CASCADE,
+    realm_id UUID NOT NULL REFERENCES realm(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
@@ -64,10 +84,10 @@ CREATE INDEX idx_user_name ON "user" (realm_id, first_name, last_name);
 -----------------------------------------------------------
 -- Create resources_groups table
 CREATE TABLE resource_group (
-    id SERIAL PRIMARY KEY,
-    realm_id INTEGER REFERENCES realm(id) ON DELETE CASCADE,
-    client_id INTEGER REFERENCES client(id) ON DELETE CASCADE,
-    user_id SERIAL NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    realm_id UUID NOT NULL REFERENCES realm(id) ON DELETE CASCADE,
+    client_id UUID NOT NULL REFERENCES client(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
     is_default BOOLEAN DEFAULT FALSE,
@@ -120,8 +140,8 @@ EXECUTE FUNCTION manage_default_resource_group();
 
 -- Create resources table
 CREATE TABLE resource (
-    id SERIAL PRIMARY KEY,
-    group_id INTEGER REFERENCES resource_group(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    group_id UUID NOT NULL REFERENCES resource_group(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     value TEXT NOT NULL,
     description TEXT,
@@ -135,7 +155,7 @@ CREATE UNIQUE INDEX resource_group_and_resource_idx ON resource (group_id, name)
 
 -- Create accounts table
 CREATE TABLE account (
-    user_id SERIAL NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     type TEXT NOT NULL,
     provider TEXT NOT NULL,
     provider_account_id TEXT NOT NULL,
@@ -154,7 +174,7 @@ CREATE TABLE account (
 -- Create sessions table
 CREATE TABLE session (
     session_token TEXT PRIMARY KEY,
-    user_id SERIAL NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     expires TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -195,7 +215,7 @@ CREATE TABLE two_factor_confirmation (
 -- Create authenticators table
 CREATE TABLE authenticator (
     credential_id TEXT NOT NULL UNIQUE,
-    user_id SERIAL NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     provider_account_id TEXT NOT NULL,
     credential_public_key TEXT NOT NULL,
     counter INTEGER NOT NULL,

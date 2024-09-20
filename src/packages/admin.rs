@@ -45,3 +45,5 @@ async fn create_master_realm(conn: &DatabaseConnection) -> Result<realm::Model, 
 
     Ok(inserted_realm)
 }
+
+// async fn create_default_client(conn: &DatabaseConnection, realm_id: uu)

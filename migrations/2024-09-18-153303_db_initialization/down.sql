@@ -35,6 +35,7 @@ DROP TABLE IF EXISTS client;
 DROP TABLE IF EXISTS realm;
 
 -- Drop functions and triggers
+DROP FUNCTION IF EXISTS uuid_generate_v7();
 DROP TRIGGER IF EXISTS ensure_single_default_resource_group ON resource_group;
 DROP FUNCTION IF EXISTS manage_default_resource_group();
 DROP TRIGGER IF EXISTS before_insert_and_update_realm ON realm;

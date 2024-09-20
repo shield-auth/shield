@@ -5,8 +5,8 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "user")]
 pub struct Model {
-    #[sea_orm(primary_key)]
-    pub id: i32,
+    #[sea_orm(primary_key, auto_increment = false)]
+    pub id: Uuid,
     #[sea_orm(column_type = "Text")]
     pub first_name: String,
     #[sea_orm(column_type = "Text", nullable)]
@@ -21,7 +21,7 @@ pub struct Model {
     pub password_hash: Option<String>,
     pub is_temp_password: Option<bool>,
     pub locked_at: Option<DateTime>,
-    pub realm_id: Option<i32>,
+    pub realm_id: Uuid,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

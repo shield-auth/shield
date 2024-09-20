@@ -5,13 +5,13 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "client")]
 pub struct Model {
-    #[sea_orm(primary_key)]
-    pub id: i32,
+    #[sea_orm(primary_key, auto_increment = false)]
+    pub id: Uuid,
     #[sea_orm(column_type = "Text")]
     pub name: String,
     pub two_factor_enabled_at: Option<DateTime>,
     pub locked_at: Option<DateTime>,
-    pub realm_id: Option<i32>,
+    pub realm_id: Uuid,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

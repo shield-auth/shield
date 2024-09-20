@@ -7,7 +7,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub session_token: String,
-    pub user_id: i32,
+    pub user_id: Uuid,
     pub expires: DateTime,
     pub created_at: DateTime,
     pub updated_at: DateTime,
