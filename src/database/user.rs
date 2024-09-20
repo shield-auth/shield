@@ -15,6 +15,8 @@ pub struct Model {
     pub email: String,
     pub email_verified_at: Option<DateTime>,
     #[sea_orm(column_type = "Text", nullable)]
+    pub phone: Option<String>,
+    #[sea_orm(column_type = "Text", nullable)]
     pub image: Option<String>,
     pub two_factor_enabled_at: Option<DateTime>,
     #[sea_orm(column_type = "Text", nullable)]

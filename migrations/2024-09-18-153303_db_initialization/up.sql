@@ -64,6 +64,7 @@ CREATE TABLE "user" (
     last_name TEXT,
     email TEXT NOT NULL,
     email_verified_at TIMESTAMP,
+    phone TEXT,
     image TEXT,
     two_factor_enabled_at TIMESTAMP,
     password_hash TEXT,
@@ -74,7 +75,8 @@ CREATE TABLE "user" (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP),
-    CONSTRAINT chk_email_verified_at CHECK (email_verified_at IS NULL OR email_verified_at >= created_at AND email_verified_at <= CURRENT_TIMESTAMP)
+    CONSTRAINT chk_email_verified_at CHECK (email_verified_at IS NULL OR email_verified_at >= created_at AND email_verified_at <= CURRENT_TIMESTAMP),
+    CONSTRAINT chk_phone_format CHECK (phone ~ '^\+?[0-9]{10,14}$')
 );
 
 CREATE UNIQUE INDEX realm_email_idx ON "user" (realm_id, email);
