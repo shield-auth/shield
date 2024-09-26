@@ -4,6 +4,7 @@ use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
 
 use super::settings::SETTINGS;
 
+#[derive(Clone)]
 pub struct AppState {
     pub db: DatabaseConnection,
 }

@@ -29,12 +29,18 @@ pub struct Admin {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct Secrets {
+    pub signing_key: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct Settings {
     pub environment: String,
     pub server: Server,
     pub logger: Logger,
     pub database: Database,
     pub admin: Admin,
+    pub secrets: Secrets,
 }
 
 impl Settings {

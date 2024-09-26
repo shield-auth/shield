@@ -4,8 +4,8 @@ server:
 database:
   uri: "postgres://postgres:1234@localhost:5432/shield"
   name: shield
-auth:
-  secret: secret
+secrets:
+  signing_key: secret
 logger:
   level: debug
 admin:
