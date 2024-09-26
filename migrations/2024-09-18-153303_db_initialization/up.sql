@@ -71,17 +71,37 @@ CREATE TABLE "user" (
     is_temp_password BOOLEAN DEFAULT TRUE,
     locked_at TIMESTAMP,
     realm_id UUID NOT NULL REFERENCES realm(id) ON DELETE CASCADE,
+    realm_locked_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP),
     CONSTRAINT chk_email_verified_at CHECK (email_verified_at IS NULL OR email_verified_at >= created_at AND email_verified_at <= CURRENT_TIMESTAMP),
-    CONSTRAINT chk_phone_format CHECK (phone ~ '^\+?[0-9]{10,14}$')
+    CONSTRAINT chk_phone_format CHECK (phone ~ '^\+?[0-9]{10,14}$'),
+    CONSTRAINT chk_realm_locked_at CHECK (realm_locked_at IS NULL OR realm_locked_at <= CURRENT_TIMESTAMP)
 );
 
 CREATE UNIQUE INDEX realm_email_idx ON "user" (realm_id, email);
-CREATE INDEX realm_email_locked_at_idx ON "user" (realm_id, email, locked_at);
+CREATE INDEX realm_email_locked_at_idx ON "user" (realm_id, email, locked_at) WHERE locked_at IS NULL;
 CREATE INDEX idx_user_name ON "user" (realm_id, first_name, last_name);
+CREATE INDEX idx_user_realm_locked_at ON "user" (realm_id, realm_locked_at) WHERE realm_locked_at IS NULL;
+
+-- Trigger to update realm_locked_at
+CREATE OR REPLACE FUNCTION update_user_realm_locked_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE "user"
+    SET realm_locked_at = NEW.locked_at
+    WHERE realm_id = NEW.id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_user_realm_locked_at
+AFTER UPDATE OF locked_at ON realm
+FOR EACH ROW
+WHEN (OLD.locked_at IS DISTINCT FROM NEW.locked_at)
+EXECUTE FUNCTION update_user_realm_locked_at();
 
 -----------------------------------------------------------
 -- Create resources_groups table
@@ -94,6 +114,7 @@ CREATE TABLE resource_group (
     description TEXT,
     is_default BOOLEAN DEFAULT FALSE,
     locked_at TIMESTAMP,
+    client_locked_at TIMESTAMP REFERENCES client(locked_at) ON UPDATE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP)
@@ -148,6 +169,7 @@ CREATE TABLE resource (
     value TEXT NOT NULL,
     description TEXT,
     locked_at TIMESTAMP,
+    resource_locked_at TIMESTAMP REFERENCES resource_group(locked_at) ON UPDATE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP)
