@@ -14,7 +14,7 @@ use crate::{
     },
 };
 use axum::{extract::Path, Extension, Json};
-use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter};
+use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
@@ -37,19 +37,18 @@ pub async fn login(
     debug!("🚀 Login request received!");
     let user_with_resource_groups = User::find()
         .filter(user::Column::Email.eq(payload.email))
-        .find_with_related(ResourceGroup)
+        .find_also_related(ResourceGroup)
         .filter(resource_group::Column::RealmId.eq(realm_id))
         .filter(resource_group::Column::ClientId.eq(client_id))
-        .all(&state.db)
+        .one(&state.db)
         .await?;
 
-    if user_with_resource_groups.is_empty() {
+    if user_with_resource_groups.is_none() {
         debug!("No matching data found");
         return Err(Error::not_found());
     }
 
-    let (user, resource_groups) = &user_with_resource_groups[0];
-
+    let (user, resource_groups) = user_with_resource_groups.unwrap();
     if !user.verify_password(&payload.password) {
         debug!("Wrong password");
         return Err(Error::Authenticate(AuthenticateError::WrongCredentials));
@@ -59,13 +58,13 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
-    if resource_groups.is_empty() {
+    if resource_groups.is_none() {
         debug!("No matching resource group found");
         return Err(Error::not_found());
     }
 
-    let resource_group = &resource_groups[0];
-    if resource_group.locked_at.is_some() {
+    let resource_groups = resource_groups.unwrap();
+    if resource_groups.locked_at.is_some() {
         debug!("Resource group is locked");
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
@@ -83,7 +82,7 @@ pub async fn login(
 
     // Fetch resources
     let resources = Resource::find()
-        .filter(resource::Column::GroupId.eq(resource_group.id))
+        .filter(resource::Column::GroupId.eq(resource_groups.id))
         .filter(resource::Column::LockedAt.is_null())
         .all(&state.db)
         .await?;
@@ -93,71 +92,8 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
-    println!("Resource group: {:#?}, Resources: {:#?}", resource_group, &resources);
-    let access_token = create(user.clone(), client, resource_group.clone(), resources, &SETTINGS.secrets.signing_key).unwrap();
+    let access_token = create(user.clone(), client, resource_groups, resources, &SETTINGS.secrets.signing_key).unwrap();
     Ok(Json(LoginResponse { access_token }))
-
-    // let user = User::find().filter(user::Column::Email.eq(payload.email)).one(&state.db).await.unwrap();
-
-    // if user.is_none() {
-    //     debug!("No user found");
-    //     return Err(Error::not_found());
-    // }
-
-    // let user = user.unwrap();
-    // if !user.verify_password(&payload.password) {
-    //     debug!("Wrong password");
-    //     return Err(Error::Authenticate(AuthenticateError::WrongCredentials));
-    // }
-    // if user.locked_at.is_some() {
-    //     debug!("User is locked");
-    //     return Err(Error::Authenticate(AuthenticateError::Locked));
-    // }
-
-    // // let client = Client::find_by_id(client_id).one(&state.db).await.unwrap();
-    // if client.is_none() {
-    //     debug!("No client found");
-    //     return Err(Error::not_found());
-    // }
-
-    // let client = client.unwrap();
-    // if client.locked_at.is_some() {
-    //     debug!("Client is locked");
-    //     return Err(Error::Authenticate(AuthenticateError::Locked));
-    // }
-
-    // let resource_group = ResourceGroup::find()
-    //     .filter(resource_group::Column::RealmId.eq(client.realm_id))
-    //     .filter(resource_group::Column::ClientId.eq(client_id))
-    //     .filter(resource_group::Column::UserId.eq(user.id))
-    //     .one(&state.db)
-    //     .await
-    //     .unwrap();
-
-    // if resource_group.is_none() {
-    //     debug!("No resource group found");
-    //     return Err(Error::not_found());
-    // }
-    // let resource_group = resource_group.unwrap();
-    // if resource_group.locked_at.is_some() {
-    //     debug!("Resource group is locked");
-    //     return Err(Error::Authenticate(AuthenticateError::Locked));
-    // }
-
-    // let resources = Resource::find()
-    //     .filter(resource::Column::GroupId.eq(resource_group.id))
-    //     .filter(resource::Column::LockedAt.is_null())
-    //     .all(&state.db)
-    //     .await
-    //     .unwrap();
-    // if resources.is_empty() {
-    //     debug!("No resources found");
-    //     return Err(Error::Authenticate(AuthenticateError::Locked));
-    // }
-
-    // println!("Resource group: {:#?}, Resources: {:#?}", &resource_group, &resources);
-    // let access_token = create(user, client, resource_group, resources, &SETTINGS.secrets.signing_key).unwrap();
-    // Ok(Json(LoginResponse { access_token }))
 }
 
 pub async fn register(Extension(state): Extension<Arc<AppState>>) {

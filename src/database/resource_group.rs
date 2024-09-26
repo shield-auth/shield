@@ -16,7 +16,6 @@ pub struct Model {
     pub description: Option<String>,
     pub is_default: Option<bool>,
     pub locked_at: Option<DateTime>,
-    pub client_locked_at: Option<DateTime>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

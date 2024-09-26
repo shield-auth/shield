@@ -71,37 +71,17 @@ CREATE TABLE "user" (
     is_temp_password BOOLEAN DEFAULT TRUE,
     locked_at TIMESTAMP,
     realm_id UUID NOT NULL REFERENCES realm(id) ON DELETE CASCADE,
-    realm_locked_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP),
     CONSTRAINT chk_email_verified_at CHECK (email_verified_at IS NULL OR email_verified_at >= created_at AND email_verified_at <= CURRENT_TIMESTAMP),
-    CONSTRAINT chk_phone_format CHECK (phone ~ '^\+?[0-9]{10,14}$'),
-    CONSTRAINT chk_realm_locked_at CHECK (realm_locked_at IS NULL OR realm_locked_at <= CURRENT_TIMESTAMP)
+    CONSTRAINT chk_phone_format CHECK (phone ~ '^\+?[0-9]{10,14}$')
 );
 
 CREATE UNIQUE INDEX realm_email_idx ON "user" (realm_id, email);
-CREATE INDEX realm_email_locked_at_idx ON "user" (realm_id, email, locked_at) WHERE locked_at IS NULL;
+CREATE INDEX realm_email_locked_at_idx ON "user" (realm_id, email, locked_at);
 CREATE INDEX idx_user_name ON "user" (realm_id, first_name, last_name);
-CREATE INDEX idx_user_realm_locked_at ON "user" (realm_id, realm_locked_at) WHERE realm_locked_at IS NULL;
-
--- Trigger to update realm_locked_at
-CREATE OR REPLACE FUNCTION update_user_realm_locked_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE "user"
-    SET realm_locked_at = NEW.locked_at
-    WHERE realm_id = NEW.id;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_update_user_realm_locked_at
-AFTER UPDATE OF locked_at ON realm
-FOR EACH ROW
-WHEN (OLD.locked_at IS DISTINCT FROM NEW.locked_at)
-EXECUTE FUNCTION update_user_realm_locked_at();
 
 -----------------------------------------------------------
 -- Create resources_groups table
@@ -114,34 +94,13 @@ CREATE TABLE resource_group (
     description TEXT,
     is_default BOOLEAN DEFAULT FALSE,
     locked_at TIMESTAMP,
-    client_locked_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP),
-    CONSTRAINT chk_client_locked_at CHECK (client_locked_at IS NULL OR client_locked_at <= CURRENT_TIMESTAMP) 
+    CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP)
 );
 
-CREATE UNIQUE INDEX realm_client_user_resource_group_idx ON resource_group (realm_id, client_id, user_id, name);
-CREATE INDEX client_user_default_resource_group_idx ON resource_group (client_id, user_id) WHERE is_default = true;
-CREATE INDEX idx_resource_group_client_locked_at ON resource_group (client_id, client_locked_at) WHERE client_locked_at IS NULL;
-CREATE UNIQUE INDEX idx_single_default_resource_group ON resource_group (client_id, user_id) WHERE is_default = true;
-
--- Trigger to update client_locked_at
-CREATE OR REPLACE FUNCTION update_resource_group_client_locked_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE resource_group
-    SET client_locked_at = NEW.locked_at
-    WHERE client_id = NEW.id;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_update_resource_group_client_locked_at
-AFTER UPDATE OF locked_at ON client
-FOR EACH ROW
-WHEN (OLD.locked_at IS DISTINCT FROM NEW.locked_at)
-EXECUTE FUNCTION update_resource_group_client_locked_at();
+CREATE UNIQUE INDEX realm_client_user_resource_group_idx ON resource_group (name, client_id, user_id);
+CREATE INDEX client_user_default_resource_group_idx ON resource_group (client_id, user_id, is_default) WHERE is_default = true;
 
 -- Function to manage default resource group
 CREATE OR REPLACE FUNCTION manage_default_resource_group()
@@ -195,23 +154,6 @@ CREATE TABLE resource (
 );
 
 CREATE UNIQUE INDEX resource_group_and_resource_idx ON resource (group_id, name);
-
--- Add a trigger to update resource.locked_at when resource_group.locked_at changes
-CREATE OR REPLACE FUNCTION update_resource_locked_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE resource
-    SET locked_at = NEW.locked_at
-    WHERE group_id = NEW.id;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_update_resource_locked_at
-AFTER UPDATE OF locked_at ON resource_group
-FOR EACH ROW
-WHEN (OLD.locked_at IS DISTINCT FROM NEW.locked_at)
-EXECUTE FUNCTION update_resource_locked_at();
 
 -- Create accounts table
 CREATE TABLE account (
