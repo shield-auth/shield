@@ -24,6 +24,7 @@ pub struct Model {
     pub is_temp_password: Option<bool>,
     pub locked_at: Option<DateTime>,
     pub realm_id: Uuid,
+    pub realm_locked_at: Option<DateTime>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
