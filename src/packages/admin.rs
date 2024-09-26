@@ -1,3 +1,9 @@
+use std::{
+    fs::{create_dir_all, File},
+    io::Write,
+    path::Path,
+};
+
 use sea_orm::{prelude::Uuid, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use tracing::info;
 
@@ -12,6 +18,13 @@ use crate::{
 };
 
 use super::{db::AppState, errors::Error};
+
+#[allow(dead_code)]
+#[derive(Debug)]
+pub struct DefaultCred {
+    realm_id: Uuid,
+    client_id: Uuid,
+}
 
 pub async fn setup(state: &AppState) -> Result<(), Error> {
     info!("Checking ADMIN availability!");
@@ -37,6 +50,25 @@ async fn initialize_db(conn: &DatabaseConnection) -> Result<(), Error> {
         let client = create_default_client(conn, realm.id).await?;
         let user = create_admin_user(conn, realm.id).await?;
         assign_resource_to_admin(conn, realm.id, client.id, user.id).await?;
+        let default_cred = DefaultCred {
+            realm_id: realm.id,
+            client_id: client.id,
+        };
+        info!("🗝️ Please note these credentials!");
+        println!("{:?}", default_cred);
+
+        let file_path = "./logs/default_cred.txt"; // Use relative path for better portability
+        let path = Path::new(file_path);
+        if let Some(parent_dir) = path.parent() {
+            create_dir_all(parent_dir).expect("Failed to create directory");
+        } else {
+            panic!("Invalid file path");
+        }
+        let mut file = File::create(file_path).expect("Failed to create file");
+        let content = format!("{:#?}", default_cred);
+        file.write_all(content.as_bytes()).expect("Failed to write to file");
+
+        info!("📝 However above credentials have been '/logs/default_cred.txt' file.");
         Ok(())
     })()
     .await;

@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use crate::{
     database::{
-        client,
         prelude::{Client, Resource, ResourceGroup, User},
         resource, resource_group, user,
     },
@@ -10,11 +9,11 @@ use crate::{
         db::AppState,
         errors::{AuthenticateError, Error},
         settings::SETTINGS,
-        token::{create, Claims, TokenUser},
+        token::create,
     },
 };
 use axum::{extract::Path, Extension, Json};
-use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
+use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 

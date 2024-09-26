@@ -1,3 +1,4 @@
 /target
 Secrets*.toml
 .env*
+logs
