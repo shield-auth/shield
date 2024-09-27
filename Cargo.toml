@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 axum = "0.7.6"
+axum-extra = { version = "0.9.4", features = ["typed-header"] }
 bcrypt = "0.15.1"
 chrono = { version = "0.4.38", features = ["serde"] }
 config = { version = "0.14.0", features = ["yaml"] }

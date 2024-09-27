@@ -38,6 +38,7 @@ impl Error {
             Error::Authenticate(AuthenticateError::InvalidToken) => (StatusCode::UNAUTHORIZED, 40005),
             Error::Authenticate(AuthenticateError::Locked) => (StatusCode::LOCKED, 40006),
             Error::Authenticate(AuthenticateError::EmailNotVerified) => (StatusCode::FORBIDDEN, 40007),
+            Error::Authenticate(AuthenticateError::NoResource) => (StatusCode::FORBIDDEN, 40008),
 
             // 5XX Errors
             Error::Authenticate(AuthenticateError::TokenCreation) => (StatusCode::INTERNAL_SERVER_ERROR, 5001),
@@ -89,6 +90,8 @@ pub enum AuthenticateError {
     TokenCreation,
     #[error("Invalid authentication credentials")]
     InvalidToken,
+    #[error("Inappropriate resource access")]
+    NoResource,
     #[error("Email not verified")]
     EmailNotVerified,
     #[error("User is locked")]

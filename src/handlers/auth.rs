@@ -9,7 +9,7 @@ use crate::{
         db::AppState,
         errors::{AuthenticateError, Error},
         settings::SETTINGS,
-        token::create,
+        token::{create, TokenUser},
     },
 };
 use axum::{extract::Path, Extension, Json};
@@ -95,10 +95,12 @@ pub async fn login(
     Ok(Json(LoginResponse { access_token }))
 }
 
-pub async fn register(Extension(state): Extension<Arc<AppState>>) {
+pub async fn register(user: TokenUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<LoginResponse>, Error> {
     debug!("🚀 Register request received!");
 
-    todo!();
+    Ok(Json(LoginResponse {
+        access_token: format!("Bearer {:#?}", user),
+    }))
 }
 
 pub async fn verify() {

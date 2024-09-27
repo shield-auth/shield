@@ -61,6 +61,17 @@ impl TokenUser {
             resource: Some(Resource::from(client, resource_group, resources)),
         }
     }
+
+    pub fn from_claim(claims: Claims) -> Self {
+        Self {
+            sub: claims.sub,
+            first_name: claims.first_name,
+            last_name: claims.last_name,
+            email: claims.email,
+            phone: claims.phone,
+            resource: claims.resource,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

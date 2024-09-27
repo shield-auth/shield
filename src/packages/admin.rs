@@ -142,6 +142,15 @@ async fn assign_resource_to_admin(conn: &DatabaseConnection, realm_id: Uuid, cli
         ..Default::default()
     };
     let inserted_resource = new_resource.insert(conn).await?;
+
+    let new_resource_2 = resource::ActiveModel {
+        group_id: Set(inserted_resource_group.id),
+        name: Set("realm".to_owned()),
+        value: Set("master".to_owned()),
+        description: Set(Some("This role has been created at the time of initialization.".to_owned())),
+        ..Default::default()
+    };
+    let _inserted_resource_2 = new_resource_2.insert(conn).await?;
     info!("✅ 5/5: Default resource created");
     Ok(inserted_resource)
 }
