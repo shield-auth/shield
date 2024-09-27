@@ -39,6 +39,7 @@ impl Error {
             Error::Authenticate(AuthenticateError::Locked) => (StatusCode::LOCKED, 40006),
             Error::Authenticate(AuthenticateError::EmailNotVerified) => (StatusCode::FORBIDDEN, 40007),
             Error::Authenticate(AuthenticateError::NoResource) => (StatusCode::FORBIDDEN, 40008),
+            Error::Authenticate(AuthenticateError::ActionForbidden) => (StatusCode::FORBIDDEN, 40009),
 
             // 5XX Errors
             Error::Authenticate(AuthenticateError::TokenCreation) => (StatusCode::INTERNAL_SERVER_ERROR, 5001),
@@ -94,6 +95,8 @@ pub enum AuthenticateError {
     NoResource,
     #[error("Email not verified")]
     EmailNotVerified,
+    #[error("Action forbidden")]
+    ActionForbidden,
     #[error("User is locked")]
     Locked,
 }
