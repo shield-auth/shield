@@ -1,12 +1,12 @@
 use std::str::FromStr;
 
 use sea_orm::prelude::Uuid;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::packages::errors::Error;
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DefaultCred {
     pub realm_id: Uuid,
     pub client_id: Uuid,

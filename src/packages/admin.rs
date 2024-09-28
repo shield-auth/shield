@@ -13,28 +13,32 @@ use crate::{
         prelude::{Realm, User},
         realm, resource, resource_group, user,
     },
-    packages::settings::SETTINGS,
+    packages::settings::{Settings, SETTINGS},
     utils::{hash::generate_password_hash, helpers::default_cred::DefaultCred},
 };
 
 use super::{db::AppState, errors::Error};
 
-pub async fn setup(state: &AppState) -> Result<(), Error> {
+pub async fn setup(state: &AppState) -> Result<bool, Error> {
     info!("Checking ADMIN availability!");
-    let is_admin_user_exists = User::find().filter(user::Column::Email.eq(&SETTINGS.admin.email)).one(&state.db).await?;
+    let is_admin_user_exists = User::find()
+        .filter(user::Column::Email.eq(&SETTINGS.read().admin.email))
+        .one(&state.db)
+        .await?;
 
     if is_admin_user_exists.is_some() {
         info!("DB has been already initialized!");
         info!("Starting the server...");
+        Ok(false)
     } else {
         info!("DB has not been initialized!");
         info!("⌛ Initializing the DB...");
 
         initialize_db(&state.db).await?;
         info!("Admin initialization complete.");
+        Settings::reload().expect("Failed to reload settings");
+        Ok(true)
     }
-
-    Ok(())
 }
 
 async fn initialize_db(conn: &DatabaseConnection) -> Result<(), Error> {
@@ -98,12 +102,13 @@ async fn create_default_client(conn: &DatabaseConnection, realm_id: Uuid) -> Res
 }
 
 async fn create_admin_user(conn: &DatabaseConnection, realm_id: Uuid) -> Result<user::Model, Error> {
-    let pw_hash = generate_password_hash(&SETTINGS.admin.password).await?;
+    let admin = SETTINGS.read().admin.clone();
+    let pw_hash = generate_password_hash(admin.password).await?;
     let new_user = user::ActiveModel {
-        email: Set(SETTINGS.admin.email.to_owned()),
+        email: Set(admin.email.to_owned()),
         password_hash: Set(Some(pw_hash)),
         realm_id: Set(realm_id),
-        first_name: Set(SETTINGS.admin.email.to_owned()),
+        first_name: Set(admin.email.to_owned()),
         is_temp_password: Set(Some(false)),
         ..Default::default()
     };
@@ -139,7 +144,7 @@ async fn assign_resource_to_admin(conn: &DatabaseConnection, realm_id: Uuid, cli
     let new_resource_2 = resource::ActiveModel {
         group_id: Set(inserted_resource_group.id),
         name: Set("realm".to_owned()),
-        value: Set("Master".to_owned()),
+        value: Set(realm_id.to_string()),
         description: Set(Some("This role has been created at the time of initialization.".to_owned())),
         ..Default::default()
     };

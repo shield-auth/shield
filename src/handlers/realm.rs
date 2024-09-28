@@ -5,7 +5,10 @@ use sea_orm::prelude::Uuid;
 
 use crate::{
     database::realm::Model,
-    mappers::realm::{CreateRealmRequest, DeleteResponse, UpdateRealmRequest},
+    mappers::{
+        realm::{CreateRealmRequest, UpdateRealmRequest},
+        DeleteResponse,
+    },
     packages::{
         db::AppState,
         errors::{AuthenticateError, Error},
@@ -28,7 +31,7 @@ pub async fn get_realms(user: TokenUser, Extension(state): Extension<Arc<AppStat
 }
 
 pub async fn get_realm(user: TokenUser, Extension(state): Extension<Arc<AppState>>, Path(realm_id): Path<Uuid>) -> Result<Json<Model>, Error> {
-    if is_master_realm_admin(&user) {
+    if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
         let fetched_realm = get_realm_by_id(&state.db, realm_id).await?;
         match fetched_realm {
             Some(fetched_realm) => Ok(Json(fetched_realm)),
@@ -37,19 +40,7 @@ pub async fn get_realm(user: TokenUser, Extension(state): Extension<Arc<AppState
             }
         }
     } else {
-        let fetched_realm = get_realm_by_id(&state.db, realm_id).await?;
-        match fetched_realm {
-            Some(fetched_realm) => {
-                if is_current_realm_admin(&user, &fetched_realm.name) {
-                    return Ok(Json(fetched_realm));
-                } else {
-                    return Err(Error::Authenticate(AuthenticateError::NoResource));
-                }
-            }
-            None => {
-                return Err(Error::Authenticate(AuthenticateError::NoResource));
-            }
-        }
+        return Err(Error::Authenticate(AuthenticateError::NoResource));
     }
 }
 

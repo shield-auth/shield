@@ -10,7 +10,7 @@ pub struct AppState {
 }
 
 pub async fn get_db_connection_pool() -> Result<AppState, DbErr> {
-    let uri = &SETTINGS.database.uri;
+    let uri = &SETTINGS.read().database.uri;
     let mut opts = ConnectOptions::new(uri);
     opts.max_connections(20).connect_timeout(Duration::from_secs(5));
 

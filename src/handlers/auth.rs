@@ -91,7 +91,7 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
-    let access_token = create(user.clone(), client, resource_groups, resources, &SETTINGS.secrets.signing_key).unwrap();
+    let access_token = create(user.clone(), client, resource_groups, resources, &SETTINGS.read().secrets.signing_key).unwrap();
     Ok(Json(LoginResponse { access_token }))
 }
 

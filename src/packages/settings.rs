@@ -1,10 +1,15 @@
+use crate::packages::errors::Error;
 use config::{Config, ConfigError, Environment, File};
 use dotenvy::dotenv;
 use once_cell::sync::Lazy;
+use parking_lot::RwLock;
 use serde::Deserialize;
-use std::{env, fmt};
+use std::{env, fmt, fs::read_to_string, sync::Arc};
 
-pub static SETTINGS: Lazy<Settings> = Lazy::new(|| Settings::new().expect("Failed to setup settings"));
+use crate::utils::helpers::default_cred::DefaultCred;
+
+// pub static SETTINGS: Lazy<Settings> = Lazy::new(|| Settings::new().expect("Failed to setup settings"));
+pub static SETTINGS: Lazy<Arc<RwLock<Settings>>> = Lazy::new(|| Arc::new(RwLock::new(Settings::new().expect("Failed to setup settings"))));
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Server {
@@ -41,6 +46,7 @@ pub struct Settings {
     pub database: Database,
     pub admin: Admin,
     pub secrets: Secrets,
+    pub default_cred: DefaultCred,
 }
 
 impl Settings {
@@ -69,10 +75,32 @@ impl Settings {
             builder = builder.set_override("admin.password", admin_password)?;
         }
 
+        let default_cred_str = read_to_string("./logs/default_cred.txt").map_err(Error::from);
+        let default_cred_str = default_cred_str.unwrap();
+        let default_cred = DefaultCred::from_str(&default_cred_str);
+        let default_cred = default_cred.unwrap();
+        builder = builder.set_override("default_cred.realm_id", default_cred.realm_id.to_string())?;
+        builder = builder.set_override("default_cred.client_id", default_cred.client_id.to_string())?;
+
         builder
             .build()?
             // Deserialize (and thus freeze) the entire configuration.
             .try_deserialize()
+    }
+
+    pub fn reload() -> Result<(), ConfigError> {
+        let new_settings = Settings::new()?;
+        let mut settings = SETTINGS.write();
+        *settings = new_settings;
+        Ok(())
+    }
+
+    pub fn get<F, T>(f: F) -> T
+    where
+        F: FnOnce(&Settings) -> T,
+    {
+        let settings = SETTINGS.read();
+        f(&settings)
     }
 }
 

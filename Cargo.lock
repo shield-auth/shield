@@ -2158,6 +2158,7 @@ dependencies = [
  "dotenvy",
  "jsonwebtoken",
  "once_cell",
+ "parking_lot",
  "sea-orm",
  "serde",
  "serde_json",

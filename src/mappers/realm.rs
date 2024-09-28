@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct CreateRealmRequest {
@@ -9,9 +9,4 @@ pub struct CreateRealmRequest {
 pub struct UpdateRealmRequest {
     pub name: String,
     pub lock: Option<bool>,
-}
-
-#[derive(Serialize)]
-pub struct DeleteResponse {
-    pub ok: bool,
 }

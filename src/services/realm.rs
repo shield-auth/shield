@@ -28,13 +28,13 @@ pub async fn insert_realm(db: &DatabaseConnection, name: String) -> Result<Model
 }
 
 pub async fn update_realm_by_id(db: &DatabaseConnection, id: Uuid, payload: UpdateRealmRequest) -> Result<Model, Error> {
+    if is_default_realm(id) && payload.lock == Some(true) {
+        return Err(Error::cannot_perform_operation("Cannot lock the default realm"));
+    }
+
     let realm = get_realm_by_id(db, id).await?;
     match realm {
         Some(realm) => {
-            if is_default_realm(realm.id) && payload.lock == Some(true) {
-                return Err(Error::cannot_perform_operation("Cannot lock the default realm"));
-            }
-
             let locked_at = match payload.lock {
                 Some(true) => Some(realm.locked_at.unwrap_or_else(|| Utc::now().naive_utc())),
                 Some(false) => None,
