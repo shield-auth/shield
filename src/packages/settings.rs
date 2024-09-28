@@ -24,7 +24,7 @@ pub struct Logger {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Database {
     pub uri: String,
-    pub name: String,
+    // pub name: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -40,7 +40,7 @@ pub struct Secrets {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Settings {
-    pub environment: String,
+    // pub environment: String,
     pub server: Server,
     pub logger: Logger,
     pub database: Database,
@@ -95,13 +95,13 @@ impl Settings {
         Ok(())
     }
 
-    pub fn get<F, T>(f: F) -> T
-    where
-        F: FnOnce(&Settings) -> T,
-    {
-        let settings = SETTINGS.read();
-        f(&settings)
-    }
+    // pub fn get<F, T>(f: F) -> T
+    // where
+    //     F: FnOnce(&Settings) -> T,
+    // {
+    //     let settings = SETTINGS.read();
+    //     f(&settings)
+    // }
 }
 
 impl fmt::Display for Server {

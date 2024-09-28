@@ -1,5 +1,5 @@
 use sea_orm::prelude::Uuid;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct CreateClientRequest {
