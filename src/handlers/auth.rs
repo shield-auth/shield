@@ -3,14 +3,18 @@ use std::sync::Arc;
 use crate::{
     database::{
         prelude::{Client, Resource, ResourceGroup, User},
-        resource, resource_group, user,
+        resource, resource_group,
+        user::{self, Model},
     },
+    mappers::auth::CreateUserRequest,
     packages::{
         db::AppState,
         errors::{AuthenticateError, Error},
         settings::SETTINGS,
         token::{create, TokenUser},
     },
+    services::user::insert_user,
+    utils::role_checker::{is_current_realm_admin, is_master_realm_admin},
 };
 use axum::{extract::Path, Extension, Json};
 use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter};
@@ -95,12 +99,18 @@ pub async fn login(
     Ok(Json(LoginResponse { access_token }))
 }
 
-pub async fn register(user: TokenUser, Extension(_state): Extension<Arc<AppState>>) -> Result<Json<LoginResponse>, Error> {
-    debug!("🚀 Register request received!");
-
-    Ok(Json(LoginResponse {
-        access_token: format!("Bearer {:#?}", user),
-    }))
+pub async fn register(
+    user: TokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
+    Json(payload): Json<CreateUserRequest>,
+) -> Result<Json<Model>, Error> {
+    if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
+        let user = insert_user(&state.db, realm_id, client_id, payload).await?;
+        Ok(Json(user))
+    } else {
+        return Err(Error::Authenticate(AuthenticateError::ActionForbidden));
+    }
 }
 
 pub async fn verify() {

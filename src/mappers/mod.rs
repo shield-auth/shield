@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+pub mod auth;
 pub mod client;
 pub mod realm;
 
