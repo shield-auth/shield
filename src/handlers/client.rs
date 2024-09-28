@@ -7,6 +7,7 @@ use crate::{
         errors::{AuthenticateError, Error},
         token::TokenUser,
     },
+    utils::role_checker::{is_master_realm_admin, is_realm_admin},
 };
 use axum::{extract::Path, Extension, Json};
 use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter};
@@ -16,21 +17,12 @@ pub async fn get_clients(
     Extension(state): Extension<Arc<AppState>>,
     Path(realm_id): Path<Uuid>,
 ) -> Result<Json<Vec<client::Model>>, Error> {
-    let resource = match user.resource {
-        Some(resource) => resource,
-        None => return Err(Error::Authenticate(AuthenticateError::NoResource)),
-    };
-    let role = resource.identifiers.get("role");
-    let realm = resource.identifiers.get("realm");
-    if role.is_none() && realm.is_none() {
-        return Err(Error::Authenticate(AuthenticateError::NoResource));
-    }
-
-    if role.unwrap() == "admin" && realm.unwrap() == "master" {
+    if is_master_realm_admin(&user) {
         let clients = Client::find().filter(client::Column::RealmId.eq(realm_id)).all(&state.db).await?;
         Ok(Json(clients))
     } else {
-        if role.unwrap() == "admin" {
+        if is_realm_admin(&user) {
+            let resource = user.resource.unwrap();
             let clients = Client::find().filter(client::Column::RealmId.eq(realm_id)).all(&state.db).await?;
             let client = clients.iter().find(|&client| client.id == resource.client_id);
             match client {
@@ -48,24 +40,14 @@ pub async fn get_client(
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<client::Model>, Error> {
-    let resource = match user.resource {
-        Some(resource) => resource,
-        None => return Err(Error::Authenticate(AuthenticateError::NoResource)),
-    };
-    let role = resource.identifiers.get("role");
-    let realm = resource.identifiers.get("realm");
-    if role.is_none() && realm.is_none() {
-        return Err(Error::Authenticate(AuthenticateError::NoResource));
-    }
-
-    if role.unwrap() == "admin" && realm.unwrap() == "master" {
+    if is_master_realm_admin(&user) {
         let client = Client::find_by_id(client_id).one(&state.db).await?;
         match client {
             Some(client) => Ok(Json(client)),
             None => return Err(Error::Authenticate(AuthenticateError::NoResource)),
         }
     } else {
-        if role.unwrap() == "admin" {
+        if is_realm_admin(&user) {
             let client = Client::find_by_id(client_id)
                 .filter(client::Column::RealmId.eq(realm_id))
                 .one(&state.db)
@@ -75,7 +57,7 @@ pub async fn get_client(
                 None => return Err(Error::Authenticate(AuthenticateError::NoResource)),
             };
         } else {
-            if resource.client_id == client_id {
+            if user.resource.as_ref().unwrap().client_id == client_id {
                 let client = Client::find_by_id(client_id).one(&state.db).await?;
                 match client {
                     Some(client) => return Ok(Json(client)),

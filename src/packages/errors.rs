@@ -4,7 +4,9 @@ use axum::Json;
 use bcrypt::BcryptError;
 use sea_orm::DbErr;
 use serde_json::json;
+use std::io;
 use tokio::task::JoinError;
+use tracing::error;
 
 #[derive(thiserror::Error, Debug)]
 #[error("...")]
@@ -13,7 +15,7 @@ pub enum Error {
     Authenticate(#[from] AuthenticateError),
 
     #[error("{0}")]
-    BadRequest(#[from] BadRequest),
+    BadRequest(#[from] BadRequestError),
 
     #[error("Database error: {0}")]
     DatabaseError(#[from] DatabaseError),
@@ -26,35 +28,37 @@ pub enum Error {
 
     #[error("{0}")]
     HashPassword(#[from] BcryptError),
+
+    #[error("{0}")]
+    FileError(#[from] FileError),
+
+    #[error("{0}")]
+    SerdeJson(#[from] serde_json::Error),
 }
 
 impl Error {
     fn get_codes(&self) -> (StatusCode, u16) {
-        match *self {
+        match self {
             // 4XX Errors
-            Error::BadRequest(_) => (StatusCode::BAD_REQUEST, 40002),
-            Error::NotFound(_) => (StatusCode::NOT_FOUND, 40003),
-            Error::Authenticate(AuthenticateError::WrongCredentials) => (StatusCode::UNAUTHORIZED, 40004),
-            Error::Authenticate(AuthenticateError::InvalidToken) => (StatusCode::UNAUTHORIZED, 40005),
-            Error::Authenticate(AuthenticateError::Locked) => (StatusCode::LOCKED, 40006),
-            Error::Authenticate(AuthenticateError::EmailNotVerified) => (StatusCode::FORBIDDEN, 40007),
-            Error::Authenticate(AuthenticateError::NoResource) => (StatusCode::FORBIDDEN, 40008),
-            Error::Authenticate(AuthenticateError::ActionForbidden) => (StatusCode::FORBIDDEN, 40009),
+            Error::BadRequest(err) => err.get_codes(),
+            Error::NotFound(err) => (StatusCode::NOT_FOUND, 40003),
+            Error::Authenticate(err) => err.get_codes(),
 
             // 5XX Errors
-            Error::Authenticate(AuthenticateError::TokenCreation) => (StatusCode::INTERNAL_SERVER_ERROR, 5001),
             Error::RunSyncTask(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5005),
             Error::HashPassword(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5006),
             Error::DatabaseError(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5007),
+            Error::FileError(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5008),
+            Error::SerdeJson(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5009),
         }
     }
 
     pub fn bad_request() -> Self {
-        Error::BadRequest(BadRequest {})
+        Error::BadRequest(BadRequestError::Generic)
     }
 
     pub fn not_found() -> Self {
-        Error::NotFound(NotFound {})
+        Error::NotFound(NotFound::Generic)
     }
 
     pub fn db_error<E>(err: E) -> Self
@@ -70,10 +74,37 @@ impl Error {
     {
         (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
     }
+
+    pub fn invalid_input(message: &str) -> Self {
+        Error::BadRequest(BadRequestError::InvalidInput(message.to_string()))
+    }
+
+    pub fn missing_field(field: &str) -> Self {
+        Error::BadRequest(BadRequestError::MissingField(field.to_string()))
+    }
+
+    pub fn cannot_perform_operation(message: &str) -> Self {
+        Error::BadRequest(BadRequestError::CannotPerformOperation(message.to_string()))
+    }
+
+    pub fn context(self, context: &str) -> Self {
+        match self {
+            Error::BadRequest(err) => Error::BadRequest(err.with_context(context)),
+            Error::NotFound(err) => Error::NotFound(err.with_context(context)),
+            Error::Authenticate(err) => Error::Authenticate(err.with_context(context)),
+            _ => self,
+        }
+    }
+
+    pub fn log(&self) {
+        let (status, code) = self.get_codes();
+        error!("Error {}/{}: {}", status.as_u16(), code, self);
+    }
 }
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
+        self.log();
         let (status_code, code) = self.get_codes();
         let message = self.to_string();
         let body = Json(json!({ "code": code, "message": message }));
@@ -101,20 +132,92 @@ pub enum AuthenticateError {
     Locked,
 }
 
-#[derive(thiserror::Error, Debug)]
-#[error("Bad Request")]
-pub struct BadRequest {}
+impl AuthenticateError {
+    fn get_codes(&self) -> (StatusCode, u16) {
+        match self {
+            AuthenticateError::WrongCredentials => (StatusCode::UNAUTHORIZED, 40004),
+            AuthenticateError::InvalidToken => (StatusCode::UNAUTHORIZED, 40005),
+            AuthenticateError::Locked => (StatusCode::LOCKED, 40006),
+            AuthenticateError::EmailNotVerified => (StatusCode::FORBIDDEN, 40007),
+            AuthenticateError::NoResource => (StatusCode::FORBIDDEN, 40008),
+            AuthenticateError::ActionForbidden => (StatusCode::FORBIDDEN, 40009),
+            AuthenticateError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, 5001),
+        }
+    }
+
+    fn with_context(self, context: &str) -> Self {
+        match self {
+            AuthenticateError::WrongCredentials => AuthenticateError::WrongCredentials,
+            AuthenticateError::TokenCreation => AuthenticateError::TokenCreation,
+            AuthenticateError::InvalidToken => AuthenticateError::InvalidToken,
+            AuthenticateError::NoResource => AuthenticateError::NoResource,
+            AuthenticateError::EmailNotVerified => AuthenticateError::EmailNotVerified,
+            AuthenticateError::ActionForbidden => AuthenticateError::ActionForbidden,
+            AuthenticateError::Locked => AuthenticateError::Locked,
+        }
+    }
+}
 
 #[derive(thiserror::Error, Debug)]
-#[error("Not found")]
-pub struct NotFound {}
+pub enum BadRequestError {
+    #[error("Bad Request")]
+    Generic,
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+    #[error("Missing required field: {0}")]
+    MissingField(String),
+    #[error("Cannot perform operation: {0}")]
+    CannotPerformOperation(String),
+}
+
+impl BadRequestError {
+    fn get_codes(&self) -> (StatusCode, u16) {
+        (StatusCode::BAD_REQUEST, 40002)
+    }
+
+    fn with_context(self, context: &str) -> Self {
+        match self {
+            BadRequestError::Generic => BadRequestError::CannotPerformOperation(context.to_string()),
+            BadRequestError::InvalidInput(msg) => BadRequestError::InvalidInput(format!("{}: {}", context, msg)),
+            BadRequestError::MissingField(field) => BadRequestError::MissingField(format!("{}: {}", context, field)),
+            BadRequestError::CannotPerformOperation(msg) => BadRequestError::CannotPerformOperation(format!("{}: {}", context, msg)),
+        }
+    }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum NotFound {
+    #[error("Not found")]
+    Generic,
+    #[error("Resource not found: {0}")]
+    Resource(String),
+}
+
+impl NotFound {
+    fn with_context(self, context: &str) -> Self {
+        match self {
+            NotFound::Generic => NotFound::Resource(context.to_string()),
+            NotFound::Resource(resource) => NotFound::Resource(format!("{}: {}", context, resource)),
+        }
+    }
+}
 
 #[derive(thiserror::Error, Debug)]
 #[error("Database error: {0}")]
 pub struct DatabaseError(#[from] Box<dyn std::error::Error + Send + Sync>);
 
+#[derive(thiserror::Error, Debug)]
+#[error("File error: {0}")]
+pub struct FileError(#[from] io::Error);
+
 impl From<DbErr> for Error {
     fn from(err: DbErr) -> Self {
         Error::DatabaseError(DatabaseError(Box::new(err)))
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::FileError(FileError(err))
     }
 }

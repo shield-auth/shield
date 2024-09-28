@@ -5,6 +5,7 @@ use std::{
 };
 
 use sea_orm::{prelude::Uuid, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use serde::Deserialize;
 use tracing::info;
 
 use crate::{
@@ -14,17 +15,10 @@ use crate::{
         realm, resource, resource_group, user,
     },
     packages::settings::SETTINGS,
-    utils::hash::generate_password_hash,
+    utils::{hash::generate_password_hash, helpers::default_cred::DefaultCred},
 };
 
 use super::{db::AppState, errors::Error};
-
-#[allow(dead_code)]
-#[derive(Debug)]
-pub struct DefaultCred {
-    realm_id: Uuid,
-    client_id: Uuid,
-}
 
 pub async fn setup(state: &AppState) -> Result<(), Error> {
     info!("Checking ADMIN availability!");
