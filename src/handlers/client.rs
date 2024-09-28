@@ -7,7 +7,7 @@ use crate::{
         errors::{AuthenticateError, Error},
         token::TokenUser,
     },
-    utils::role_checker::{is_master_realm_admin, is_realm_admin},
+    utils::role_checker::{is_any_realm_admin, is_master_realm_admin},
 };
 use axum::{extract::Path, Extension, Json};
 use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter};
@@ -21,7 +21,7 @@ pub async fn get_clients(
         let clients = Client::find().filter(client::Column::RealmId.eq(realm_id)).all(&state.db).await?;
         Ok(Json(clients))
     } else {
-        if is_realm_admin(&user) {
+        if is_any_realm_admin(&user) {
             let resource = user.resource.unwrap();
             let clients = Client::find().filter(client::Column::RealmId.eq(realm_id)).all(&state.db).await?;
             let client = clients.iter().find(|&client| client.id == resource.client_id);
@@ -47,7 +47,7 @@ pub async fn get_client(
             None => return Err(Error::Authenticate(AuthenticateError::NoResource)),
         }
     } else {
-        if is_realm_admin(&user) {
+        if is_any_realm_admin(&user) {
             let client = Client::find_by_id(client_id)
                 .filter(client::Column::RealmId.eq(realm_id))
                 .one(&state.db)

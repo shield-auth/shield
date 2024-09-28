@@ -8,10 +8,12 @@ use tracing::info;
 mod app;
 mod database;
 mod handlers;
+mod mappers;
 mod middleware;
 mod models;
 mod packages;
 mod routes;
+mod services;
 mod utils;
 
 #[tokio::main]

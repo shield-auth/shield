@@ -5,7 +5,6 @@ use std::{
 };
 
 use sea_orm::{prelude::Uuid, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
-use serde::Deserialize;
 use tracing::info;
 
 use crate::{
@@ -140,7 +139,7 @@ async fn assign_resource_to_admin(conn: &DatabaseConnection, realm_id: Uuid, cli
     let new_resource_2 = resource::ActiveModel {
         group_id: Set(inserted_resource_group.id),
         name: Set("realm".to_owned()),
-        value: Set("master".to_owned()),
+        value: Set("Master".to_owned()),
         description: Set(Some("This role has been created at the time of initialization.".to_owned())),
         ..Default::default()
     };
