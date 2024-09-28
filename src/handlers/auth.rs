@@ -6,7 +6,7 @@ use crate::{
         resource, resource_group,
         user::{self, Model},
     },
-    mappers::auth::CreateUserRequest,
+    mappers::auth::{CreateUserRequest, LogoutResponse},
     packages::{
         db::AppState,
         errors::{AuthenticateError, Error},
@@ -119,6 +119,10 @@ pub async fn register(
     } else {
         return Err(Error::Authenticate(AuthenticateError::ActionForbidden));
     }
+}
+
+pub async fn logout(user: TokenUser, Extension(_state): Extension<Arc<AppState>>) -> Result<Json<LogoutResponse>, Error> {
+    Ok(Json(LogoutResponse { ok: true, user_id: user.sub }))
 }
 
 pub async fn verify() {

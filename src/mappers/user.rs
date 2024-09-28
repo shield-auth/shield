@@ -17,3 +17,11 @@ pub struct UpdateResourceRequest {
     pub description: Option<String>,
     pub lock: Option<bool>,
 }
+
+#[derive(Deserialize)]
+pub struct UpdateResourceGroupRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub is_default: Option<bool>,
+    pub lock: Option<bool>,
+}

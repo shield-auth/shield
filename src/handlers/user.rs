@@ -4,12 +4,14 @@ use crate::database::prelude::{Resource, ResourceGroup, User};
 use crate::database::{
     resource,
     resource::{ActiveModel as ResourceActiveModel, Model as ResourceModel},
-    resource_group, user,
-    user::{ActiveModel as UserActiveModel, Model as UserModel},
+    resource_group,
+    resource_group::{ActiveModel as ResourceGroupActiveModel, Model as ResourceGroupModel},
+    user,
+    user::Model as UserModel,
 };
-use crate::mappers::user::{AddResourceRequest, UpdateResourceRequest};
+use crate::mappers::user::{AddResourceRequest, UpdateResourceGroupRequest, UpdateResourceRequest};
 use crate::mappers::DeleteResponse;
-use crate::utils::default_resource_checker::{is_default_resource, is_default_user};
+use crate::utils::default_resource_checker::{is_default_resource, is_default_resource_group, is_default_user};
 use axum::extract::Path;
 use axum::{Extension, Json};
 use chrono::Utc;
@@ -72,6 +74,107 @@ pub async fn delete_user(
         }
 
         let result = User::delete_by_id(user_id).exec(&state.db).await?;
+        Ok(Json(DeleteResponse {
+            ok: result.rows_affected == 1,
+        }))
+    } else {
+        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
+    }
+}
+
+pub async fn get_resource_groups(
+    user: TokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<Vec<ResourceGroupModel>>, Error> {
+    if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
+        let resource_groups = ResourceGroup::find()
+            .filter(resource_group::Column::RealmId.eq(realm_id))
+            .filter(resource_group::Column::UserId.eq(user_id))
+            .all(&state.db)
+            .await?;
+        Ok(Json(resource_groups))
+    } else {
+        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
+    }
+}
+
+pub async fn get_resource_group(
+    user: TokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((realm_id, _, resource_group_id)): Path<(Uuid, Uuid, Uuid)>,
+) -> Result<Json<ResourceGroupModel>, Error> {
+    if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
+        let resource_group = ResourceGroup::find_by_id(resource_group_id).one(&state.db).await?;
+        match resource_group {
+            Some(resource_group) => Ok(Json(resource_group)),
+            None => return Err(Error::not_found()),
+        }
+    } else {
+        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
+    }
+}
+
+pub async fn update_resource_group(
+    user: TokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((realm_id, _, resource_group_id)): Path<(Uuid, Uuid, Uuid)>,
+    Json(payload): Json<UpdateResourceGroupRequest>,
+) -> Result<Json<ResourceGroupModel>, Error> {
+    if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
+        if is_default_resource_group(resource_group_id) {
+            return Err(Error::cannot_perform_operation("Cannot update the default resource group"));
+        }
+
+        let resource_group = ResourceGroup::find_by_id(resource_group_id).one(&state.db).await?;
+        if resource_group.is_none() {
+            return Err(Error::not_found());
+        }
+
+        let locked_at = match payload.lock {
+            Some(true) => Some(resource_group.as_ref().unwrap().locked_at.unwrap_or_else(|| Utc::now().naive_utc())),
+            Some(false) => None,
+            None => resource_group.as_ref().unwrap().locked_at,
+        };
+        let is_default = match payload.is_default {
+            Some(true) => Some(true),
+            _ => resource_group.as_ref().unwrap().is_default,
+        };
+
+        let resource_group = ResourceGroupActiveModel {
+            id: Set(resource_group_id),
+            realm_id: Set(resource_group.as_ref().unwrap().realm_id),
+            client_id: Set(resource_group.as_ref().unwrap().client_id),
+            user_id: Set(resource_group.as_ref().unwrap().user_id),
+            name: Set(payload.name),
+            description: Set(payload.description),
+            is_default: Set(is_default),
+            locked_at: Set(locked_at),
+            ..Default::default()
+        };
+        let resource_group = resource_group.update(&state.db).await?;
+        Ok(Json(resource_group))
+    } else {
+        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
+    }
+}
+
+pub async fn delete_resource_group(
+    user: TokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((realm_id, _, resource_group_id)): Path<(Uuid, Uuid, Uuid)>,
+) -> Result<Json<DeleteResponse>, Error> {
+    if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
+        if is_default_resource_group(resource_group_id) {
+            return Err(Error::cannot_perform_operation("Cannot delete the default resource group"));
+        }
+
+        let resource_group = ResourceGroup::find_by_id(resource_group_id).one(&state.db).await?;
+        if resource_group.is_none() {
+            return Err(Error::not_found());
+        }
+
+        let result = ResourceGroup::delete_by_id(resource_group_id).exec(&state.db).await?;
         Ok(Json(DeleteResponse {
             ok: result.rows_affected == 1,
         }))

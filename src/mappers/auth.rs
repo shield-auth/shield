@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use sea_orm::prelude::Uuid;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct ResourceSubset {
@@ -17,4 +18,10 @@ pub struct CreateUserRequest {
     pub phone: Option<String>,
     pub image: Option<String>,
     pub resource: ResourceSubset,
+}
+
+#[derive(Serialize)]
+pub struct LogoutResponse {
+    pub ok: bool,
+    pub user_id: Uuid,
 }

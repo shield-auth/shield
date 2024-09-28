@@ -14,6 +14,10 @@ pub fn is_default_user(user_id: Uuid) -> bool {
     user_id == SETTINGS.read().default_cred.master_admin_user_id
 }
 
+pub fn is_default_resource_group(resource_group_id: Uuid) -> bool {
+    resource_group_id == SETTINGS.read().default_cred.resource_group_id
+}
+
 pub fn is_default_resource(resource_id: Uuid) -> bool {
     SETTINGS.read().default_cred.resource_ids.contains(&resource_id)
 }
