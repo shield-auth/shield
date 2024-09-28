@@ -23,6 +23,7 @@ CREATE TABLE realm (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     name TEXT NOT NULL UNIQUE,
     slug TEXT NOT NULL UNIQUE,
+    max_concurrent_sessions INTEGER,
     locked_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -47,6 +48,7 @@ CREATE TABLE client (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     name TEXT NOT NULL,
     two_factor_enabled_at TIMESTAMP,
+    max_concurrent_sessions INTEGER NOT NULL DEFAULT 1,
     locked_at TIMESTAMP,
     realm_id UUID NOT NULL REFERENCES realm(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -56,6 +58,47 @@ CREATE TABLE client (
 
 CREATE UNIQUE INDEX realm_id_name_key ON client (realm_id, name);
 CREATE INDEX idx_client_realm_locked ON client (realm_id, locked_at);
+
+-- Create trigger function to check max_concurrent_sessions constraint
+CREATE OR REPLACE FUNCTION check_max_concurrent_sessions()
+RETURNS TRIGGER AS $$
+DECLARE
+    realm_max_sessions INTEGER;
+    current_total_sessions INTEGER;
+BEGIN
+    -- Fetch the max_concurrent_sessions for the realm
+    SELECT max_concurrent_sessions INTO realm_max_sessions
+    FROM realm
+    WHERE id = NEW.realm_id;
+
+    -- Only perform the check if the realm has a max_concurrent_sessions limit set
+    IF realm_max_sessions IS NOT NULL THEN
+        -- Calculate the total max_concurrent_sessions for all clients in this realm, including the new or updated client
+        SELECT COALESCE(SUM(max_concurrent_sessions), 0) INTO current_total_sessions
+        FROM client
+        WHERE realm_id = NEW.realm_id
+        AND id <> NEW.id;  -- Exclude the current client during an update
+
+        -- Add the new client's max_concurrent_sessions to the total
+        current_total_sessions := current_total_sessions + NEW.max_concurrent_sessions;
+
+        -- Check if the total exceeds the realm's max_concurrent_sessions
+        IF current_total_sessions > realm_max_sessions THEN
+            RAISE EXCEPTION 'Total max_concurrent_sessions for all clients in this realm (%s) exceeds the realm''s limit (%s)',
+            current_total_sessions, realm_max_sessions;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger for enforcing the constraint on insert and update
+CREATE TRIGGER enforce_max_concurrent_sessions
+BEFORE INSERT OR UPDATE ON client
+FOR EACH ROW
+EXECUTE FUNCTION check_max_concurrent_sessions();
+
 
 -- Create users table
 CREATE TABLE "user" (
@@ -175,12 +218,27 @@ CREATE TABLE account (
 
 -- Create sessions table
 CREATE TABLE session (
-    session_token TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    client_id UUID NOT NULL REFERENCES client(id) ON DELETE CASCADE,
     expires TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM session
+    WHERE expires < CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER session_cleanup_trigger
+AFTER INSERT OR UPDATE ON session
+FOR EACH STATEMENT
+EXECUTE FUNCTION cleanup_expired_sessions();
 
 -- Create verification_token table
 CREATE TABLE verification_token (

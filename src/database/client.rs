@@ -15,6 +15,7 @@ pub struct Model {
     pub realm_id: Uuid,
     pub created_at: DateTime,
     pub updated_at: DateTime,
+    pub max_concurrent_sessions: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -29,6 +30,8 @@ pub enum Relation {
     Realm,
     #[sea_orm(has_many = "super::resource_group::Entity")]
     ResourceGroup,
+    #[sea_orm(has_many = "super::session::Entity")]
+    Session,
 }
 
 impl Related<super::realm::Entity> for Entity {
@@ -40,6 +43,12 @@ impl Related<super::realm::Entity> for Entity {
 impl Related<super::resource_group::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::ResourceGroup.def()
+    }
+}
+
+impl Related<super::session::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Session.def()
     }
 }
 

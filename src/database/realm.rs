@@ -15,6 +15,7 @@ pub struct Model {
     pub locked_at: Option<DateTime>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
+    pub max_concurrent_sessions: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
