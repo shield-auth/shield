@@ -41,7 +41,7 @@ impl Error {
         match self {
             // 4XX Errors
             Error::BadRequest(err) => err.get_codes(),
-            Error::NotFound(err) => (StatusCode::NOT_FOUND, 40003),
+            Error::NotFound(_) => (StatusCode::NOT_FOUND, 40003),
             Error::Authenticate(err) => err.get_codes(),
 
             // 5XX Errors

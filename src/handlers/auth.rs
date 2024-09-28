@@ -95,7 +95,7 @@ pub async fn login(
     Ok(Json(LoginResponse { access_token }))
 }
 
-pub async fn register(user: TokenUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<LoginResponse>, Error> {
+pub async fn register(user: TokenUser, Extension(_state): Extension<Arc<AppState>>) -> Result<Json<LoginResponse>, Error> {
     debug!("🚀 Register request received!");
 
     Ok(Json(LoginResponse {

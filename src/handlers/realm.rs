@@ -24,6 +24,9 @@ use crate::{
 pub async fn get_realms(user: TokenUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<Vec<Model>>, Error> {
     if is_master_realm_admin(&user) {
         let realms = get_all_realms(&state.db).await?;
+        if realms.is_empty() {
+            return Err(Error::not_found());
+        }
         return Ok(Json(realms));
     }
 
@@ -36,7 +39,7 @@ pub async fn get_realm(user: TokenUser, Extension(state): Extension<Arc<AppState
         match fetched_realm {
             Some(fetched_realm) => Ok(Json(fetched_realm)),
             None => {
-                return Err(Error::Authenticate(AuthenticateError::NoResource));
+                return Err(Error::not_found());
             }
         }
     } else {
