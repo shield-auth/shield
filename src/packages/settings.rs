@@ -1,10 +1,10 @@
 use crate::packages::errors::Error;
-use config::{Config, ConfigError, Environment, File};
+use config::{Config, ConfigError, Environment, File, Value};
 use dotenvy::dotenv;
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use serde::Deserialize;
-use std::{env, fmt, fs::read_to_string, sync::Arc};
+use std::{env, fmt, fs::read_to_string, path::Path, sync::Arc};
 
 use crate::utils::helpers::default_cred::DefaultCred;
 
@@ -75,12 +75,23 @@ impl Settings {
             builder = builder.set_override("admin.password", admin_password)?;
         }
 
-        let default_cred_str = read_to_string("./logs/default_cred.txt").map_err(Error::from);
-        let default_cred_str = default_cred_str.unwrap();
-        let default_cred = DefaultCred::from_str(&default_cred_str);
-        let default_cred = default_cred.unwrap();
-        builder = builder.set_override("default_cred.realm_id", default_cred.realm_id.to_string())?;
-        builder = builder.set_override("default_cred.client_id", default_cred.client_id.to_string())?;
+        // "./logs/default_cred.txt" exists then read it else skip
+        if Path::new("./logs/default_cred.json").exists() {
+            let default_cred = DefaultCred::from_file().expect("Failed to read credentials");
+            builder = builder.set_override("default_cred.realm_id", default_cred.realm_id.to_string())?;
+            builder = builder.set_override("default_cred.client_id", default_cred.client_id.to_string())?;
+            builder = builder.set_override("default_cred.master_admin_user_id", default_cred.master_admin_user_id.to_string())?;
+            builder = builder.set_override("default_cred.resource_group_id", default_cred.resource_group_id.to_string())?;
+
+            let resource_ids_value: Vec<Value> = default_cred.resource_ids.iter().map(|uuid| Value::new(None, uuid.to_string())).collect();
+            builder = builder.set_override("default_cred.resource_ids", resource_ids_value)?;
+        } else {
+            builder = builder.set_override("default_cred.realm_id", "00000000-0000-0000-0000-000000000000")?;
+            builder = builder.set_override("default_cred.client_id", "00000000-0000-0000-0000-000000000000")?;
+            builder = builder.set_override("default_cred.master_admin_user_id", "00000000-0000-0000-0000-000000000000")?;
+            builder = builder.set_override("default_cred.resource_group_id", "00000000-0000-0000-0000-000000000000")?;
+            builder = builder.set_override("default_cred.resource_ids", vec!["00000000-0000-0000-0000-000000000000"])?;
+        }
 
         builder
             .build()?

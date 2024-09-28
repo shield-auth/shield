@@ -46,24 +46,28 @@ async fn initialize_db(conn: &DatabaseConnection) -> Result<(), Error> {
     let result = (|| async {
         let client = create_default_client(conn, realm.id).await?;
         let user = create_admin_user(conn, realm.id).await?;
-        assign_resource_to_admin(conn, realm.id, client.id, user.id).await?;
+        let resource_assignment_result = assign_resource_to_admin(conn, realm.id, client.id, user.id).await?;
         let default_cred = DefaultCred {
             realm_id: realm.id,
             client_id: client.id,
+            master_admin_user_id: user.id,
+            resource_group_id: resource_assignment_result.resource_group_id,
+            resource_ids: resource_assignment_result.resource_ids,
         };
         info!("🗝️ Please note these credentials!");
         println!("{:?}", default_cred);
 
-        let file_path = "./logs/default_cred.txt"; // Use relative path for better portability
+        let file_path = "./logs/default_cred.json";
         let path = Path::new(file_path);
         if let Some(parent_dir) = path.parent() {
-            create_dir_all(parent_dir).expect("Failed to create directory");
+            create_dir_all(parent_dir)?;
         } else {
             panic!("Invalid file path");
         }
-        let mut file = File::create(file_path).expect("Failed to create file");
-        let content = format!("{:#?}", default_cred);
-        file.write_all(content.as_bytes()).expect("Failed to write to file");
+
+        let json = serde_json::to_string_pretty(&default_cred)?;
+        let mut file = File::create(file_path)?;
+        file.write_all(json.as_bytes())?;
 
         info!("📝 However above credentials have been '/logs/default_cred.txt' file.");
         Ok(())
@@ -118,7 +122,17 @@ async fn create_admin_user(conn: &DatabaseConnection, realm_id: Uuid) -> Result<
     Ok(inserted_user)
 }
 
-async fn assign_resource_to_admin(conn: &DatabaseConnection, realm_id: Uuid, client_id: Uuid, user_id: Uuid) -> Result<resource::Model, Error> {
+struct ResourceAssignmentResult {
+    resource_group_id: Uuid,
+    resource_ids: Vec<Uuid>,
+}
+
+async fn assign_resource_to_admin(
+    conn: &DatabaseConnection,
+    realm_id: Uuid,
+    client_id: Uuid,
+    user_id: Uuid,
+) -> Result<ResourceAssignmentResult, Error> {
     let new_resource_group = resource_group::ActiveModel {
         client_id: Set(client_id),
         realm_id: Set(realm_id),
@@ -148,7 +162,10 @@ async fn assign_resource_to_admin(conn: &DatabaseConnection, realm_id: Uuid, cli
         description: Set(Some("This role has been created at the time of initialization.".to_owned())),
         ..Default::default()
     };
-    let _inserted_resource_2 = new_resource_2.insert(conn).await?;
+    let inserted_resource_2 = new_resource_2.insert(conn).await?;
     info!("✅ 5/5: Default resource created");
-    Ok(inserted_resource)
+    Ok(ResourceAssignmentResult {
+        resource_group_id: inserted_resource_group.id,
+        resource_ids: vec![inserted_resource.id, inserted_resource_2.id],
+    })
 }

@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::fs::read_to_string;
 
 use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
@@ -10,36 +10,15 @@ use crate::packages::errors::Error;
 pub struct DefaultCred {
     pub realm_id: Uuid,
     pub client_id: Uuid,
+    pub master_admin_user_id: Uuid,
+    pub resource_group_id: Uuid,
+    pub resource_ids: Vec<Uuid>,
 }
 
 impl DefaultCred {
-    pub fn from_str(s: &str) -> Result<Self, Error> {
-        let mut realm_id = String::new();
-        let mut client_id = String::new();
-
-        for line in s.lines() {
-            if line.contains("realm_id:") {
-                realm_id = line
-                    .split(':')
-                    .nth(1)
-                    .map(|s| s.trim().trim_end_matches(',').to_string())
-                    .unwrap_or_default();
-            }
-            if line.contains("client_id:") {
-                client_id = line
-                    .split(':')
-                    .nth(1)
-                    .map(|s| s.trim().trim_end_matches(',').to_string())
-                    .unwrap_or_default();
-            }
-        }
-
-        if realm_id.is_empty() || client_id.is_empty() {
-            return Err(Error::invalid_input("Failed to parse DefaultCred"));
-        }
-
-        let realm_id = Uuid::from_str(&realm_id).map_err(|_| Error::invalid_input("Failed to parse DefaultCred"))?;
-        let client_id = Uuid::from_str(&client_id).map_err(|_| Error::invalid_input("Failed to parse DefaultCred"))?;
-        Ok(DefaultCred { realm_id, client_id })
+    pub fn from_file() -> Result<Self, Error> {
+        let contents = read_to_string("./logs/default_cred.json").map_err(Error::from)?;
+        let default_cred: DefaultCred = serde_json::from_str(&contents)?;
+        Ok(default_cred)
     }
 }

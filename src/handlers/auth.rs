@@ -30,6 +30,9 @@ pub struct Credentials {
 #[derive(Serialize)]
 pub struct LoginResponse {
     access_token: String,
+    user: Model,
+    realm_id: Uuid,
+    client_id: Uuid,
 }
 
 pub async fn login(
@@ -96,7 +99,12 @@ pub async fn login(
     }
 
     let access_token = create(user.clone(), client, resource_groups, resources, &SETTINGS.read().secrets.signing_key).unwrap();
-    Ok(Json(LoginResponse { access_token }))
+    Ok(Json(LoginResponse {
+        access_token,
+        user,
+        realm_id,
+        client_id,
+    }))
 }
 
 pub async fn register(
