@@ -1,0 +1,15 @@
+environment: development
+server:
+  port: 5555
+  domain: localhost
+  host: http://localhost:5555
+database:
+  uri: "postgres://postgres:1234@localhost:5432/shield"
+  name: shield
+secrets:
+  signing_key: secret
+logger:
+  level: debug
+admin:
+  email: admin@admin.com
+  password: 12345

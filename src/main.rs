@@ -1,27 +1,30 @@
-#[macro_use]
-extern crate rocket;
+use std::net::SocketAddr;
 
-mod organization;
+use app::create_app;
+use packages::settings::SETTINGS;
+use tokio::net::TcpListener;
+use tracing::info;
 
-use organization::org_routes;
+mod app;
+mod database;
+mod handlers;
+mod mappers;
+mod middleware;
+mod models;
+mod packages;
+mod routes;
+mod services;
+mod utils;
 
-#[get("/")]
-fn index() -> &'static str {
-    "Hi! It's your Shield"
+#[tokio::main]
+async fn main() -> Result<(), std::io::Error> {
+    let port = SETTINGS.read().server.port;
+    let address = SocketAddr::from(([127, 0, 0, 1], port));
+
+    let app = create_app().await;
+    let listener = TcpListener::bind(address).await?;
+
+    info!("Server is listening on {}", &address);
+
+    axum::serve(listener, app).await
 }
-
-#[launch]
-fn rocket() -> _ {
-    rocket::build()
-        .mount("/", routes![index])
-        .mount("/organizations", org_routes())
-}
-
-// #[shuttle_runtime::main]
-// async fn rocket() -> shuttle_rocket::ShuttleRocket {
-//     let rocket = rocket::build()
-//         .mount("/", routes![index])
-//         .mount("/organizations", org_routes());
-
-//     Ok(rocket.into())
-// }
