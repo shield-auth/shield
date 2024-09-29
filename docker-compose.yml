@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  shield:
+    build: .
+    ports:
+      - "5555:5555"  # Adjust the port as needed
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://postgres:1234@db:5435/shield
+
+  db:
+    image: postgres:17
+    # command: ["postgres", "-c", "custom_command=/usr/local/bin/migrations/up.sql"]
+    command: ["postgres", "-c", "fsync=off", "-c", "shared_buffers=128MB", "-c", "work_mem=64MB", "-c", "checkpoint_timeout=5min", "-c", "wal_level=hot_standby", "-c", "archive_mode=always", "-c", "archive_command='test ! -d /var/lib/postgresql/archive && mkdir /var/lib/postgresql/archive; cp %p /var/lib/postgresql/archive/%f'"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=shield
+    ports:
+      - "5435:5432"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,6 @@
+.circleci
+.github
+.vscode
+.idea
+.git
+target
