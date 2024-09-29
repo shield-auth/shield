@@ -11,13 +11,13 @@ use uaparser::{Parser, UserAgentParser};
 // You might want to put this in a separate module
 #[derive(Clone, Debug)]
 pub struct SessionInfo {
-    ip_address: IpAddr,
-    user_agent: String,
-    browser: String,
-    browser_version: String,
-    operating_system: String,
-    device_type: String,
-    country_code: String,
+    pub ip_address: IpAddr,
+    pub user_agent: String,
+    pub browser: String,
+    pub browser_version: String,
+    pub operating_system: String,
+    pub device_type: String,
+    pub country_code: String,
 }
 
 pub async fn session_info_middleware(mut req: Request<Body>, next: Next) -> Response {

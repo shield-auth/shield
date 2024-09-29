@@ -10,12 +10,15 @@ pub struct Model {
     pub id: Uuid,
     #[sea_orm(column_type = "Text")]
     pub name: String,
-    pub two_factor_enabled_at: Option<DateTime>,
-    pub locked_at: Option<DateTime>,
-    pub realm_id: Uuid,
-    pub created_at: DateTime,
-    pub updated_at: DateTime,
+    pub two_factor_enabled_at: Option<DateTimeWithTimeZone>,
     pub max_concurrent_sessions: i32,
+    pub session_lifetime: i32,
+    pub refresh_token_lifetime: i32,
+    pub refresh_token_reuse_limit: i32,
+    pub locked_at: Option<DateTimeWithTimeZone>,
+    pub realm_id: Uuid,
+    pub created_at: DateTimeWithTimeZone,
+    pub updated_at: DateTimeWithTimeZone,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

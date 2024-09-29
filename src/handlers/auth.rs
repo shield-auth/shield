@@ -1,9 +1,12 @@
+use chrono::{FixedOffset, Utc};
+use sea_orm::{ActiveModelTrait, Set};
 use std::sync::Arc;
 
 use crate::{
     database::{
-        prelude::{Client, Resource, ResourceGroup, User},
-        resource, resource_group,
+        prelude::{Client, Resource, ResourceGroup, Session, User},
+        resource, resource_group, session,
+        session::ActiveModel as SessionActiveModel,
         user::{self, Model},
     },
     mappers::auth::{CreateUserRequest, LogoutResponse},
@@ -18,7 +21,7 @@ use crate::{
     utils::role_checker::{is_current_realm_admin, is_master_realm_admin},
 };
 use axum::{extract::Path, Extension, Json};
-use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter};
+use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
@@ -88,6 +91,16 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
+    let sessions = Session::find()
+        .filter(session::Column::ClientId.eq(client.id))
+        .filter(session::Column::UserId.eq(user.id))
+        .count(&state.db)
+        .await?;
+
+    if sessions >= client.max_concurrent_sessions as u64 {
+        debug!("Client has reached max concurrent sessions");
+        return Err(Error::Authenticate(AuthenticateError::MaxConcurrentSessions));
+    }
     // Fetch resources
     let resources = Resource::find()
         .filter(resource::Column::GroupId.eq(resource_groups.id))
@@ -100,7 +113,31 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
-    let access_token = create(user.clone(), client, resource_groups, resources, &SETTINGS.read().secrets.signing_key).unwrap();
+    let session = SessionActiveModel {
+        user_id: Set(user.id),
+        client_id: Set(client.id),
+        ip_address: Set(session_info.ip_address.to_string()),
+        user_agent: Set(Some(session_info.user_agent.to_string())),
+        browser: Set(Some(session_info.browser.to_string())),
+        browser_version: Set(Some(session_info.browser_version.to_string())),
+        operating_system: Set(Some(session_info.operating_system.to_string())),
+        device_type: Set(Some(session_info.device_type.to_string())),
+        country_code: Set(Some(session_info.country_code.to_string())),
+        expires: Set((Utc::now() + chrono::Duration::seconds(client.session_lifetime as i64)).into()),
+        ..Default::default()
+    };
+    let session = session.insert(&state.db).await?;
+
+    let access_token = create(
+        user.clone(),
+        client,
+        resource_groups,
+        resources,
+        session,
+        &SETTINGS.read().secrets.signing_key,
+    )
+    .unwrap();
+
     Ok(Json(LoginResponse {
         access_token,
         user,

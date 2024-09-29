@@ -24,9 +24,12 @@ CREATE TABLE realm (
     name TEXT NOT NULL UNIQUE,
     slug TEXT NOT NULL UNIQUE,
     max_concurrent_sessions INTEGER,
-    locked_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    session_lifetime INTEGER NOT NULL DEFAULT 300,
+    refresh_token_lifetime INTEGER NOT NULL DEFAULT 3600,
+    refresh_token_reuse_limit INTEGER NOT NULL DEFAULT 0,
+    locked_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Add trigger for auto-generating slug
@@ -47,31 +50,49 @@ EXECUTE FUNCTION generate_slug();
 CREATE TABLE client (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     name TEXT NOT NULL,
-    two_factor_enabled_at TIMESTAMP,
+    two_factor_enabled_at TIMESTAMPTZ,
     max_concurrent_sessions INTEGER NOT NULL DEFAULT 1,
-    locked_at TIMESTAMP,
+    session_lifetime INTEGER NOT NULL DEFAULT 300,
+    refresh_token_lifetime INTEGER NOT NULL DEFAULT 3600,
+    refresh_token_reuse_limit INTEGER NOT NULL DEFAULT 0,
+    locked_at TIMESTAMPTZ,
     realm_id UUID NOT NULL REFERENCES realm(id) ON DELETE CASCADE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP)
 );
 
 CREATE UNIQUE INDEX realm_id_name_key ON client (realm_id, name);
 CREATE INDEX idx_client_realm_locked ON client (realm_id, locked_at);
+CREATE INDEX idx_client_realm_max_sessions ON client (realm_id, max_concurrent_sessions);
+CREATE INDEX idx_client_realm_constraints ON client (realm_id, session_lifetime, refresh_token_lifetime, refresh_token_reuse_limit);
+CREATE INDEX idx_client_realm ON client (realm_id);
 
--- Create trigger function to check max_concurrent_sessions constraint
-CREATE OR REPLACE FUNCTION check_max_concurrent_sessions()
+-- Create or replace the combined trigger function to check all client constraints
+CREATE OR REPLACE FUNCTION check_client_constraints()
 RETURNS TRIGGER AS $$
 DECLARE
     realm_max_sessions INTEGER;
+    realm_session_lifetime INTEGER;
+    realm_refresh_token_lifetime INTEGER;
+    realm_refresh_token_reuse_limit INTEGER;
     current_total_sessions INTEGER;
 BEGIN
-    -- Fetch the max_concurrent_sessions for the realm
-    SELECT max_concurrent_sessions INTO realm_max_sessions
+    -- Fetch all necessary values from the realm
+    SELECT 
+        max_concurrent_sessions,
+        session_lifetime,
+        refresh_token_lifetime,
+        refresh_token_reuse_limit
+    INTO 
+        realm_max_sessions,
+        realm_session_lifetime,
+        realm_refresh_token_lifetime,
+        realm_refresh_token_reuse_limit
     FROM realm
     WHERE id = NEW.realm_id;
 
-    -- Only perform the check if the realm has a max_concurrent_sessions limit set
+    -- Check max_concurrent_sessions
     IF realm_max_sessions IS NOT NULL THEN
         -- Calculate the total max_concurrent_sessions for all clients in this realm, including the new or updated client
         SELECT COALESCE(SUM(max_concurrent_sessions), 0) INTO current_total_sessions
@@ -84,21 +105,38 @@ BEGIN
 
         -- Check if the total exceeds the realm's max_concurrent_sessions
         IF current_total_sessions > realm_max_sessions THEN
-            RAISE EXCEPTION 'Total max_concurrent_sessions for all clients in this realm (%s) exceeds the realm''s limit (%s)',
-            current_total_sessions, realm_max_sessions;
+            RAISE EXCEPTION 'Total max_concurrent_sessions for all clients in this realm (%) exceeds the realm''s limit (%)',
+                current_total_sessions, realm_max_sessions;
         END IF;
+    END IF;
+
+    -- Check session_lifetime
+    IF NEW.session_lifetime > realm_session_lifetime THEN
+        RAISE EXCEPTION 'Client session_lifetime (%) exceeds the realm''s limit (%)',
+            NEW.session_lifetime, realm_session_lifetime;
+    END IF;
+
+    -- Check refresh_token_lifetime
+    IF NEW.refresh_token_lifetime > realm_refresh_token_lifetime THEN
+        RAISE EXCEPTION 'Client refresh_token_lifetime (%) exceeds the realm''s limit (%)',
+            NEW.refresh_token_lifetime, realm_refresh_token_lifetime;
+    END IF;
+
+    -- Check refresh_token_reuse_limit
+    IF NEW.refresh_token_reuse_limit > realm_refresh_token_reuse_limit THEN
+        RAISE EXCEPTION 'Client refresh_token_reuse_limit (%) exceeds the realm''s limit (%)',
+            NEW.refresh_token_reuse_limit, realm_refresh_token_reuse_limit;
     END IF;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for enforcing the constraint on insert and update
-CREATE TRIGGER enforce_max_concurrent_sessions
+-- Create or replace the trigger for enforcing all constraints on insert and update
+CREATE OR REPLACE TRIGGER enforce_client_constraints
 BEFORE INSERT OR UPDATE ON client
 FOR EACH ROW
-EXECUTE FUNCTION check_max_concurrent_sessions();
-
+EXECUTE FUNCTION check_client_constraints();
 
 -- Create users table
 CREATE TABLE "user" (
@@ -106,16 +144,16 @@ CREATE TABLE "user" (
     first_name TEXT NOT NULL,
     last_name TEXT,
     email TEXT NOT NULL,
-    email_verified_at TIMESTAMP,
+    email_verified_at TIMESTAMPTZ,
     phone TEXT,
     image TEXT,
-    two_factor_enabled_at TIMESTAMP,
+    two_factor_enabled_at TIMESTAMPTZ,
     password_hash TEXT,
     is_temp_password BOOLEAN DEFAULT TRUE,
-    locked_at TIMESTAMP,
+    locked_at TIMESTAMPTZ,
     realm_id UUID NOT NULL REFERENCES realm(id) ON DELETE CASCADE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP),
     CONSTRAINT chk_email_verified_at CHECK (email_verified_at IS NULL OR email_verified_at >= created_at AND email_verified_at <= CURRENT_TIMESTAMP),
@@ -136,9 +174,9 @@ CREATE TABLE resource_group (
     name TEXT NOT NULL,
     description TEXT,
     is_default BOOLEAN DEFAULT FALSE,
-    locked_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    locked_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP)
 );
 
@@ -190,9 +228,9 @@ CREATE TABLE resource (
     name TEXT NOT NULL,
     value TEXT NOT NULL,
     description TEXT,
-    locked_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    locked_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_locked_at CHECK (locked_at IS NULL OR locked_at <= CURRENT_TIMESTAMP)
 );
 
@@ -211,8 +249,8 @@ CREATE TABLE account (
     scope TEXT,
     id_token TEXT,
     session_state TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (provider, provider_account_id)
 );
 
@@ -221,16 +259,16 @@ CREATE TABLE session (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     client_id UUID NOT NULL REFERENCES client(id) ON DELETE CASCADE,
-    ip_address INET NOT NULL,
+    ip_address TEXT NOT NULL,
     user_agent TEXT,
     browser VARCHAR(255),
     browser_version VARCHAR(100),
     operating_system VARCHAR(255),
     device_type VARCHAR(50),
     country_code CHAR(2),
-    expires TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    expires TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_session_user_id ON session (user_id, expires);
@@ -255,7 +293,7 @@ EXECUTE FUNCTION cleanup_expired_sessions();
 CREATE TABLE verification_token (
     identifier TEXT NOT NULL,
     token TEXT NOT NULL,
-    expires TIMESTAMP NOT NULL,
+    expires TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (identifier, token)
 );
 
@@ -263,7 +301,7 @@ CREATE TABLE verification_token (
 CREATE TABLE password_reset_token (
     identifier TEXT NOT NULL,
     token TEXT NOT NULL,
-    expires TIMESTAMP NOT NULL,
+    expires TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (identifier, token)
 );
 
@@ -271,7 +309,7 @@ CREATE TABLE password_reset_token (
 CREATE TABLE two_factor_token (
     identifier TEXT NOT NULL,
     token TEXT NOT NULL,
-    expires TIMESTAMP NOT NULL,
+    expires TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (identifier, token)
 );
 
@@ -279,7 +317,7 @@ CREATE TABLE two_factor_token (
 CREATE TABLE two_factor_confirmation (
     identifier TEXT NOT NULL,
     token TEXT NOT NULL,
-    expires TIMESTAMP NOT NULL,
+    expires TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (identifier, token)
 );
 

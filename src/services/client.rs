@@ -37,7 +37,7 @@ pub async fn update_client_by_id(db: &DatabaseConnection, client_id: Uuid, paylo
     match client {
         Some(client) => {
             let locked_at = match payload.lock {
-                Some(true) => Some(client.locked_at.unwrap_or_else(|| Utc::now().naive_utc())),
+                Some(true) => Some(client.locked_at.unwrap_or_else(|| Utc::now().into())),
                 Some(false) => None,
                 None => client.locked_at,
             };

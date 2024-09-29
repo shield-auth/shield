@@ -5,8 +5,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::database::{
-    client::Model as ClientModel, resource::Model as ResourceModel, resource_group::Model as ResourceGroupModel, user::Model as UserModel,
+    client::Model as ClientModel, resource::Model as ResourceModel, resource_group::Model as ResourceGroupModel, session::Model as SessionModel,
+    user::Model as UserModel,
 };
+
+use super::settings::SETTINGS;
 
 type TokenResult = Result<TokenData<Claims>, Error>;
 
@@ -76,9 +79,11 @@ impl TokenUser {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub exp: usize, // Expiration time (as UTC timestamp). validate_exp defaults to true in validation
-    pub iat: usize, // Issued at (as UTC timestamp)
-    pub sub: Uuid,
+    pub exp: usize,  // Expiration time (as UTC timestamp). validate_exp defaults to true in validation
+    pub iat: usize,  // Issued at (as UTC timestamp)
+    pub sub: Uuid,   // Subject
+    pub sid: Uuid,   // Session ID
+    pub iss: String, // Issuer
     pub first_name: String,
     pub last_name: String,
     pub email: String,
@@ -87,12 +92,21 @@ pub struct Claims {
 }
 
 impl Claims {
-    pub fn new(user: UserModel, client: ClientModel, resource_group: ResourceGroupModel, resources: Vec<ResourceModel>) -> Self {
+    pub fn new(
+        user: UserModel,
+        client: ClientModel,
+        resource_group: ResourceGroupModel,
+        resources: Vec<ResourceModel>,
+        session: SessionModel,
+    ) -> Self {
         let user = TokenUser::from(user, client, resource_group, resources);
+
         Self {
-            exp: (chrono::Local::now() + chrono::Duration::days(30)).timestamp() as usize,
+            exp: session.expires.timestamp() as usize,
             iat: chrono::Local::now().timestamp() as usize,
             sub: user.sub,
+            sid: session.id,
+            iss: SETTINGS.read().server.host.clone(),
             first_name: user.first_name,
             last_name: user.last_name,
             email: user.email,
@@ -107,10 +121,11 @@ pub fn create(
     client: ClientModel,
     resource_group: ResourceGroupModel,
     resources: Vec<ResourceModel>,
+    session: SessionModel,
     secret: &str,
 ) -> Result<String, Error> {
     let encoding_key = EncodingKey::from_secret(secret.as_ref());
-    let claims = Claims::new(user, client, resource_group, resources);
+    let claims = Claims::new(user, client, resource_group, resources, session);
 
     jsonwebtoken::encode(&HEADER, &claims, &encoding_key)
 }

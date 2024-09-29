@@ -25,8 +25,8 @@ pub struct Model {
     pub id_token: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
     pub session_state: Option<String>,
-    pub created_at: DateTime,
-    pub updated_at: DateTime,
+    pub created_at: DateTimeWithTimeZone,
+    pub updated_at: DateTimeWithTimeZone,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

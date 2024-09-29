@@ -118,6 +118,8 @@ impl IntoResponse for Error {
 pub enum AuthenticateError {
     #[error("Wrong authentication credentials")]
     WrongCredentials,
+    #[error("Max concurrent sessions reached")]
+    MaxConcurrentSessions,
     #[error("Failed to create authentication token")]
     TokenCreation,
     #[error("Invalid authentication credentials")]
@@ -141,6 +143,7 @@ impl AuthenticateError {
             AuthenticateError::EmailNotVerified => (StatusCode::FORBIDDEN, 40007),
             AuthenticateError::NoResource => (StatusCode::FORBIDDEN, 40008),
             AuthenticateError::ActionForbidden => (StatusCode::FORBIDDEN, 40009),
+            AuthenticateError::MaxConcurrentSessions => (StatusCode::LOCKED, 40010),
             AuthenticateError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, 5001),
         }
     }
@@ -153,6 +156,7 @@ impl AuthenticateError {
             AuthenticateError::NoResource => AuthenticateError::NoResource,
             AuthenticateError::EmailNotVerified => AuthenticateError::EmailNotVerified,
             AuthenticateError::ActionForbidden => AuthenticateError::ActionForbidden,
+            AuthenticateError::MaxConcurrentSessions => AuthenticateError::MaxConcurrentSessions,
             AuthenticateError::Locked => AuthenticateError::Locked,
         }
     }

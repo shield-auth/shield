@@ -1,10 +1,9 @@
-use crate::packages::errors::Error;
 use config::{Config, ConfigError, Environment, File, Value};
 use dotenvy::dotenv;
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use serde::Deserialize;
-use std::{env, fmt, fs::read_to_string, path::Path, sync::Arc};
+use std::{env, fmt, path::Path, sync::Arc};
 
 use crate::utils::helpers::default_cred::DefaultCred;
 
@@ -14,6 +13,8 @@ pub static SETTINGS: Lazy<Arc<RwLock<Settings>>> = Lazy::new(|| Arc::new(RwLock:
 #[derive(Debug, Clone, Deserialize)]
 pub struct Server {
     pub port: u16,
+    pub domain: String,
+    pub host: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -64,6 +65,12 @@ impl Settings {
         // the PORT env var and there is no way to change the env var name.
         if let Ok(port) = env::var("PORT") {
             builder = builder.set_override("server.port", port)?;
+        }
+        if let Ok(domain) = env::var("DOMAIN") {
+            builder = builder.set_override("server.domain", domain)?;
+        }
+        if let Ok(host) = env::var("HOST") {
+            builder = builder.set_override("server.host", host)?;
         }
         if let Ok(database_uri) = env::var("DATABASE_URL") {
             builder = builder.set_override("database.uri", database_uri)?;

@@ -14,19 +14,19 @@ pub struct Model {
     pub last_name: Option<String>,
     #[sea_orm(column_type = "Text")]
     pub email: String,
-    pub email_verified_at: Option<DateTime>,
+    pub email_verified_at: Option<DateTimeWithTimeZone>,
     #[sea_orm(column_type = "Text", nullable)]
     pub phone: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
     pub image: Option<String>,
-    pub two_factor_enabled_at: Option<DateTime>,
+    pub two_factor_enabled_at: Option<DateTimeWithTimeZone>,
     #[sea_orm(column_type = "Text", nullable)]
     pub password_hash: Option<String>,
     pub is_temp_password: Option<bool>,
-    pub locked_at: Option<DateTime>,
+    pub locked_at: Option<DateTimeWithTimeZone>,
     pub realm_id: Uuid,
-    pub created_at: DateTime,
-    pub updated_at: DateTime,
+    pub created_at: DateTimeWithTimeZone,
+    pub updated_at: DateTimeWithTimeZone,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

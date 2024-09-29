@@ -12,10 +12,13 @@ pub struct Model {
     pub name: String,
     #[sea_orm(column_type = "Text", unique)]
     pub slug: String,
-    pub locked_at: Option<DateTime>,
-    pub created_at: DateTime,
-    pub updated_at: DateTime,
     pub max_concurrent_sessions: Option<i32>,
+    pub session_lifetime: i32,
+    pub refresh_token_lifetime: i32,
+    pub refresh_token_reuse_limit: i32,
+    pub locked_at: Option<DateTimeWithTimeZone>,
+    pub created_at: DateTimeWithTimeZone,
+    pub updated_at: DateTimeWithTimeZone,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

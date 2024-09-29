@@ -9,9 +9,18 @@ pub struct Model {
     pub id: Uuid,
     pub user_id: Uuid,
     pub client_id: Uuid,
-    pub expires: DateTime,
-    pub created_at: DateTime,
-    pub updated_at: DateTime,
+    #[sea_orm(column_type = "Text")]
+    pub ip_address: String,
+    #[sea_orm(column_type = "Text", nullable)]
+    pub user_agent: Option<String>,
+    pub browser: Option<String>,
+    pub browser_version: Option<String>,
+    pub operating_system: Option<String>,
+    pub device_type: Option<String>,
+    pub country_code: Option<String>,
+    pub expires: DateTimeWithTimeZone,
+    pub created_at: DateTimeWithTimeZone,
+    pub updated_at: DateTimeWithTimeZone,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

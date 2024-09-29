@@ -36,7 +36,7 @@ pub async fn update_realm_by_id(db: &DatabaseConnection, id: Uuid, payload: Upda
     match realm {
         Some(realm) => {
             let locked_at = match payload.lock {
-                Some(true) => Some(realm.locked_at.unwrap_or_else(|| Utc::now().naive_utc())),
+                Some(true) => Some(realm.locked_at.unwrap_or_else(|| Utc::now().into())),
                 Some(false) => None,
                 None => realm.locked_at,
             };

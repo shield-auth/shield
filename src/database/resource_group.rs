@@ -16,9 +16,9 @@ pub struct Model {
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
     pub is_default: Option<bool>,
-    pub locked_at: Option<DateTime>,
-    pub created_at: DateTime,
-    pub updated_at: DateTime,
+    pub locked_at: Option<DateTimeWithTimeZone>,
+    pub created_at: DateTimeWithTimeZone,
+    pub updated_at: DateTimeWithTimeZone,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

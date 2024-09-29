@@ -132,7 +132,7 @@ pub async fn update_resource_group(
         }
 
         let locked_at = match payload.lock {
-            Some(true) => Some(resource_group.as_ref().unwrap().locked_at.unwrap_or_else(|| Utc::now().naive_utc())),
+            Some(true) => Some(resource_group.as_ref().unwrap().locked_at.unwrap_or_else(|| Utc::now().into())),
             Some(false) => None,
             None => resource_group.as_ref().unwrap().locked_at,
         };
@@ -284,7 +284,7 @@ pub async fn update_resource(
         }
 
         let locked_at = match payload.lock {
-            Some(true) => Some(resource.as_ref().unwrap().locked_at.unwrap_or_else(|| Utc::now().naive_utc())),
+            Some(true) => Some(resource.as_ref().unwrap().locked_at.unwrap_or_else(|| Utc::now().into())),
             Some(false) => None,
             None => None,
         };
