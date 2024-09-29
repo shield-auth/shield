@@ -24,8 +24,7 @@ pub async fn create_app() -> Router {
     Router::new()
         .merge(routes::create_routes())
         .layer(logger())
-        // Mark the `Authorization` request header as sensitive so it doesn't
-        // show in logs.
+        // Mark the `Authorization` request header as sensitive so it doesn't show in logs.
         .layer(SetSensitiveHeadersLayer::new(std::iter::once(header::AUTHORIZATION)))
         // Compress responses
         .layer(CompressionLayer::new())

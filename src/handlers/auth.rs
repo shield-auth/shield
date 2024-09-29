@@ -7,6 +7,7 @@ use crate::{
         user::{self, Model},
     },
     mappers::auth::{CreateUserRequest, LogoutResponse},
+    middleware::session_info_extractor::SessionInfo,
     packages::{
         db::AppState,
         errors::{AuthenticateError, Error},
@@ -37,10 +38,11 @@ pub struct LoginResponse {
 
 pub async fn login(
     Extension(state): Extension<Arc<AppState>>,
+    Extension(session_info): Extension<Arc<SessionInfo>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<Credentials>,
 ) -> Result<Json<LoginResponse>, Error> {
-    debug!("🚀 Login request received!");
+    debug!("🚀 Login request received! {:#?}", session_info);
     let user_with_resource_groups = User::find()
         .filter(user::Column::Email.eq(payload.email))
         .find_also_related(ResourceGroup)

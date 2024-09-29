@@ -221,10 +221,21 @@ CREATE TABLE session (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     client_id UUID NOT NULL REFERENCES client(id) ON DELETE CASCADE,
+    ip_address INET NOT NULL,
+    user_agent TEXT,
+    browser VARCHAR(255),
+    browser_version VARCHAR(100),
+    operating_system VARCHAR(255),
+    device_type VARCHAR(50),
+    country_code CHAR(2),
     expires TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_session_user_id ON session (user_id, expires);
+CREATE INDEX idx_session_client_id ON session (client_id, expires);
+CREATE INDEX idx_session_expires ON session (expires);
 
 CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
 RETURNS TRIGGER AS $$
