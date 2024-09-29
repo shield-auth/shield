@@ -43,6 +43,7 @@ impl Resource {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenUser {
     pub sub: Uuid,
+    pub sid: Uuid,
     #[serde(rename = "firstName")]
     pub first_name: String,
     #[serde(rename = "lastName")]
@@ -54,9 +55,10 @@ pub struct TokenUser {
 }
 
 impl TokenUser {
-    fn from(user: UserModel, client: ClientModel, resource_group: ResourceGroupModel, resources: Vec<ResourceModel>) -> Self {
+    fn from(user: UserModel, client: ClientModel, resource_group: ResourceGroupModel, resources: Vec<ResourceModel>, session: &SessionModel) -> Self {
         Self {
             sub: user.id,
+            sid: session.id,
             first_name: user.first_name.clone(),
             last_name: user.last_name.unwrap_or_else(|| "".into()),
             email: user.email.clone(),
@@ -68,6 +70,7 @@ impl TokenUser {
     pub fn from_claim(claims: Claims) -> Self {
         Self {
             sub: claims.sub,
+            sid: claims.sid,
             first_name: claims.first_name,
             last_name: claims.last_name,
             email: claims.email,
@@ -99,13 +102,13 @@ impl Claims {
         resources: Vec<ResourceModel>,
         session: SessionModel,
     ) -> Self {
-        let user = TokenUser::from(user, client, resource_group, resources);
+        let user = TokenUser::from(user, client, resource_group, resources, &session);
 
         Self {
             exp: session.expires.timestamp() as usize,
             iat: chrono::Local::now().timestamp() as usize,
             sub: user.sub,
-            sid: session.id,
+            sid: user.sid,
             iss: SETTINGS.read().server.host.clone(),
             first_name: user.first_name,
             last_name: user.last_name,

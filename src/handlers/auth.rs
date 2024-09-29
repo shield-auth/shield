@@ -1,21 +1,22 @@
-use chrono::{FixedOffset, Utc};
+use chrono::Utc;
 use sea_orm::{ActiveModelTrait, Set};
 use std::sync::Arc;
 
 use crate::{
     database::{
+        client,
         prelude::{Client, Resource, ResourceGroup, Session, User},
-        resource, resource_group, session,
-        session::ActiveModel as SessionActiveModel,
+        resource, resource_group,
+        session::{self, ActiveModel as SessionActiveModel},
         user::{self, Model},
     },
-    mappers::auth::{CreateUserRequest, LogoutResponse},
+    mappers::auth::{CreateUserRequest, IntrospectRequest, IntrospectResponse, LogoutRequest, LogoutResponse},
     middleware::session_info_extractor::SessionInfo,
     packages::{
         db::AppState,
         errors::{AuthenticateError, Error},
         settings::SETTINGS,
-        token::{create, TokenUser},
+        token::{create, decode, TokenUser},
     },
     services::user::insert_user,
     utils::role_checker::{is_current_realm_admin, is_master_realm_admin},
@@ -94,6 +95,7 @@ pub async fn login(
     let sessions = Session::find()
         .filter(session::Column::ClientId.eq(client.id))
         .filter(session::Column::UserId.eq(user.id))
+        .filter(session::Column::Expires.gt(chrono::Utc::now()))
         .count(&state.db)
         .await?;
 
@@ -160,11 +162,195 @@ pub async fn register(
     }
 }
 
-pub async fn logout(user: TokenUser, Extension(_state): Extension<Arc<AppState>>) -> Result<Json<LogoutResponse>, Error> {
-    Ok(Json(LogoutResponse { ok: true, user_id: user.sub }))
+pub async fn logout_current_session(user: TokenUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<LogoutResponse>, Error> {
+    let result = Session::delete_by_id(user.sid).exec(&state.db).await?;
+    Ok(Json(LogoutResponse {
+        ok: result.rows_affected == 1,
+        user_id: user.sub,
+        session_id: user.sid,
+    }))
 }
 
-pub async fn verify() {
-    debug!("🚀 Verify request received!");
-    todo!();
+pub async fn logout(
+    user: TokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((realm_id, _)): Path<(Uuid, Uuid)>,
+    Json(payload): Json<LogoutRequest>,
+) -> Result<Json<LogoutResponse>, Error> {
+    if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
+        match payload.access_token {
+            Some(access_token) => {
+                let sid = decode(&access_token, &SETTINGS.read().secrets.signing_key)
+                    .map_err(|_| AuthenticateError::InvalidToken)?
+                    .claims
+                    .sid;
+                let result = Session::delete_by_id(sid).exec(&state.db).await?;
+                Ok(Json(LogoutResponse {
+                    ok: result.rows_affected == 1,
+                    user_id: user.sub,
+                    session_id: user.sid,
+                }))
+            }
+            None => match payload.refresh_token {
+                Some(refresh_token) => {
+                    let sid = decode(&refresh_token, &SETTINGS.read().secrets.signing_key)
+                        .map_err(|_| AuthenticateError::InvalidToken)?
+                        .claims
+                        .sid;
+                    let result = Session::delete_by_id(sid).exec(&state.db).await?;
+                    Ok(Json(LogoutResponse {
+                        ok: result.rows_affected == 1,
+                        user_id: user.sub,
+                        session_id: user.sid,
+                    }))
+                }
+                None => Err(Error::Authenticate(AuthenticateError::NoResource)),
+            },
+        }
+    } else {
+        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
+    }
+}
+
+pub async fn logout_my_all_sessions(
+    user: TokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((_, client_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<LogoutResponse>, Error> {
+    let result = Session::delete_many()
+        .filter(session::Column::ClientId.eq(client_id))
+        .filter(session::Column::UserId.eq(user.sub))
+        .exec(&state.db)
+        .await?;
+    Ok(Json(LogoutResponse {
+        ok: result.rows_affected > 0,
+        user_id: user.sub,
+        session_id: user.sid,
+    }))
+}
+
+pub async fn logout_all(
+    user: TokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
+    Json(payload): Json<LogoutRequest>,
+) -> Result<Json<LogoutResponse>, Error> {
+    if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
+        match payload.access_token {
+            Some(access_token) => {
+                let sub = decode(&access_token, &SETTINGS.read().secrets.signing_key)
+                    .map_err(|_| AuthenticateError::InvalidToken)?
+                    .claims
+                    .sub;
+                let result = Session::delete_many()
+                    .filter(session::Column::ClientId.eq(client_id))
+                    .filter(session::Column::UserId.eq(sub))
+                    .exec(&state.db)
+                    .await?;
+                Ok(Json(LogoutResponse {
+                    ok: result.rows_affected > 0,
+                    user_id: user.sub,
+                    session_id: user.sid,
+                }))
+            }
+            None => match payload.refresh_token {
+                Some(refresh_token) => {
+                    let sub = decode(&refresh_token, &SETTINGS.read().secrets.signing_key)
+                        .map_err(|_| AuthenticateError::InvalidToken)?
+                        .claims
+                        .sub;
+                    let result = Session::delete_many()
+                        .filter(session::Column::ClientId.eq(client_id))
+                        .filter(session::Column::UserId.eq(sub))
+                        .exec(&state.db)
+                        .await?;
+                    Ok(Json(LogoutResponse {
+                        ok: result.rows_affected > 0,
+                        user_id: user.sub,
+                        session_id: user.sid,
+                    }))
+                }
+                None => Err(Error::Authenticate(AuthenticateError::NoResource)),
+            },
+        }
+    } else {
+        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
+    }
+}
+
+pub async fn introspect(
+    user: TokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
+    Json(payload): Json<IntrospectRequest>,
+) -> Result<Json<IntrospectResponse>, Error> {
+    if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
+        let token_data = decode(&payload.access_token, &SETTINGS.read().secrets.signing_key).expect("Failed to decode token");
+
+        if token_data.claims.resource.is_none() || token_data.claims.resource.is_some() && token_data.claims.resource.unwrap().client_id != client_id
+        {
+            return Err(Error::Authenticate(AuthenticateError::NoResource));
+        }
+
+        let session = Session::find_by_id(token_data.claims.sid).one(&state.db).await?;
+        match session {
+            Some(session) => {
+                let user = User::find_by_id(session.user_id)
+                    .filter(user::Column::LockedAt.is_null())
+                    .one(&state.db)
+                    .await?;
+
+                match user {
+                    Some(user) => {
+                        let client = Client::find_by_id(session.client_id)
+                            .filter(client::Column::LockedAt.is_null())
+                            .one(&state.db)
+                            .await?;
+
+                        match client {
+                            Some(client) => {
+                                let resource_group = ResourceGroup::find()
+                                    .filter(resource_group::Column::RealmId.eq(realm_id))
+                                    .filter(resource_group::Column::ClientId.eq(client.id))
+                                    .filter(resource_group::Column::UserId.eq(user.id))
+                                    .filter(resource_group::Column::LockedAt.is_null())
+                                    .one(&state.db)
+                                    .await?;
+
+                                match resource_group {
+                                    Some(resource_group) => {
+                                        let resources = Resource::find()
+                                            .filter(resource::Column::GroupId.eq(resource_group.id))
+                                            .filter(resource::Column::LockedAt.is_null())
+                                            .all(&state.db)
+                                            .await?;
+                                        Ok(Json(IntrospectResponse {
+                                            active: true,
+                                            client_id: client.id,
+                                            first_name: user.first_name.to_string(),
+                                            last_name: Some(user.last_name.unwrap_or("".to_string())),
+                                            sub: user.id,
+                                            token_type: "bearer".to_string(),
+                                            exp: token_data.claims.exp,
+                                            iat: token_data.claims.iat,
+                                            iss: SETTINGS.read().server.host.clone(),
+                                            client_name: client.name,
+                                            resource_group: resource_group.name,
+                                            resources: resources.iter().map(|r| r.name.clone()).collect::<Vec<String>>(),
+                                        }))
+                                    }
+                                    None => Err(Error::Authenticate(AuthenticateError::NoResource))?,
+                                }
+                            }
+                            None => Err(Error::Authenticate(AuthenticateError::NoResource)),
+                        }
+                    }
+                    None => Err(Error::Authenticate(AuthenticateError::NoResource)),
+                }
+            }
+            None => Err(Error::Authenticate(AuthenticateError::NoResource)),
+        }
+    } else {
+        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
+    }
 }
