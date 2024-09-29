@@ -45,6 +45,22 @@ pub async fn update_client_by_id(db: &DatabaseConnection, client_id: Uuid, paylo
             let updated_client = ActiveModel {
                 id: Set(client.id),
                 name: Set(payload.name),
+                max_concurrent_sessions: Set(match payload.max_concurrent_sessions {
+                    Some(max_concurrent_sessions) => max_concurrent_sessions,
+                    None => client.max_concurrent_sessions,
+                }),
+                session_lifetime: Set(match payload.session_lifetime {
+                    Some(session_lifetime) => session_lifetime,
+                    None => client.session_lifetime,
+                }),
+                refresh_token_lifetime: Set(match payload.refresh_token_lifetime {
+                    Some(refresh_token_lifetime) => refresh_token_lifetime,
+                    None => client.refresh_token_lifetime,
+                }),
+                refresh_token_reuse_limit: Set(match payload.refresh_token_reuse_limit {
+                    Some(refresh_token_reuse_limit) => refresh_token_reuse_limit,
+                    None => client.refresh_token_reuse_limit,
+                }),
                 locked_at: Set(locked_at),
                 ..Default::default()
             };
