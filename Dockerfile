@@ -9,8 +9,9 @@ COPY Cargo.toml Cargo.lock ./
 
 # Copy the source code and other necessary files
 COPY src ./src
+COPY migration ./migration
+COPY entity ./entity
 COPY config ./config
-COPY migrations ./migrations
 
 # Build the application
 RUN cargo build --release
@@ -21,14 +22,14 @@ FROM ubuntu:22.04
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y libpq-dev && rm -rf /var/lib/apt/lists/*
 
+# Install curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Copy the built executable from the builder stage
 COPY --from=builder /usr/src/shield/target/release/shield /usr/local/bin/shield
 
 # Copy configuration files
 COPY --from=builder /usr/src/shield/config /usr/local/bin/config
-
-# Copy schema.sql
-COPY --from=builder /usr/src/shield/migrations /usr/local/bin/migrations
 
 # Set the working directory
 WORKDIR /usr/local/bin

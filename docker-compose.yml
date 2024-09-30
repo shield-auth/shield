@@ -6,14 +6,21 @@ services:
     ports:
       - "5555:5555"  # Adjust the port as needed
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      - DATABASE_URL=postgres://postgres:1234@db:5435/shield
+      - DATABASE_URL=postgres://postgres:1234@db:5432
+      - DATABASE_NAME=shield
+      - RUN_MODE=development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:17
-    # command: ["postgres", "-c", "custom_command=/usr/local/bin/migrations/up.sql"]
-    command: ["postgres", "-c", "fsync=off", "-c", "shared_buffers=128MB", "-c", "work_mem=64MB", "-c", "checkpoint_timeout=5min", "-c", "wal_level=hot_standby", "-c", "archive_mode=always", "-c", "archive_command='test ! -d /var/lib/postgresql/archive && mkdir /var/lib/postgresql/archive; cp %p /var/lib/postgresql/archive/%f'"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -22,6 +29,11 @@ services:
       - POSTGRES_DB=shield
     ports:
       - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

@@ -1,0 +1,959 @@
+{
+	"info": {
+		"_postman_id": "401b9fa2-cf49-49db-8479-3b51dba6bea2",
+		"name": "Shield",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17476675"
+	},
+	"item": [
+		{
+			"name": "Organization",
+			"item": [
+				{
+					"name": "Projects",
+					"item": [
+						{
+							"name": "Get Projects",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL}}/organizations/{{ORGANIZATION_ID}}/projects",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"organizations",
+										"{{ORGANIZATION_ID}}",
+										"projects"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Project Details",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL}}/organizations/{{ORGANIZATION_ID}}/projects/{{PROJECT_ID}}",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"organizations",
+										"{{ORGANIZATION_ID}}",
+										"projects",
+										"{{PROJECT_ID}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get Organizations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/organizations",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"organizations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Organization Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/organizations/{{ORGANIZATION_ID}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"organizations",
+								"{{ORGANIZATION_ID}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Realm",
+			"item": [
+				{
+					"name": "Client",
+					"item": [
+						{
+							"name": "Get Clients",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"{{REALM_ID}}",
+										"clients"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Clients by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL}}/realms/019239c9-d69c-7cb5-ae6b-244997619778/clients/019239c9-d6a2-745c-96cd-d428cc716521",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"019239c9-d69c-7cb5-ae6b-244997619778",
+										"clients",
+										"019239c9-d6a2-745c-96cd-d428cc716521"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Client",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"max_concurrent_sessions\": 3\r\n    // \"lock\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"{{REALM_ID}}",
+										"clients",
+										"{{CLIENT_ID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Client",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL}}/realms/019239c9-d69c-7cb5-ae6b-244997619778/clients/019239c9-d6a2-745c-96cd-d428cc716521",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"019239c9-d69c-7cb5-ae6b-244997619778",
+										"clients",
+										"019239c9-d6a2-745c-96cd-d428cc716521"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "User",
+					"item": [
+						{
+							"name": "Get Users",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/users",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"{{REALM_ID}}",
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Users by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/users/{{USER_ID}}",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"{{REALM_ID}}",
+										"users",
+										"{{USER_ID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete User",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/users/{{USER_ID}}",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"{{REALM_ID}}",
+										"users",
+										"{{USER_ID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User Resources",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL}}/realms/019239c9-d69c-7cb5-ae6b-244997619778/users/019239c9-d6aa-72c5-b0a0-0f8f17b846d9/resources",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"019239c9-d69c-7cb5-ae6b-244997619778",
+										"users",
+										"019239c9-d6aa-72c5-b0a0-0f8f17b846d9",
+										"resources"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add User Resources",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n \"group_id\": \"019239e9-dc80-7b9f-b2dc-efd65bae4b0e\",\r\n \"identifiers\": {\r\n    \"locker\": \"test-locker-id\"\r\n }   \r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL}}/realms/019239c9-d69c-7cb5-ae6b-244997619778/users/019239e9-dc7c-79b0-a355-2b2ae5a2c1a1/resources",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"019239c9-d69c-7cb5-ae6b-244997619778",
+										"users",
+										"019239e9-dc7c-79b0-a355-2b2ae5a2c1a1",
+										"resources"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update User Resource",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"locker\",\r\n    \"value\": \"new-locker-id\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL}}/realms/019239c9-d69c-7cb5-ae6b-244997619778/users/019239c9-d6aa-72c5-b0a0-0f8f17b846d9/resources/019239c9-d6b2-7c01-9ba9-7430fec4b18e",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"019239c9-d69c-7cb5-ae6b-244997619778",
+										"users",
+										"019239c9-d6aa-72c5-b0a0-0f8f17b846d9",
+										"resources",
+										"019239c9-d6b2-7c01-9ba9-7430fec4b18e"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete User Resource",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"locker\",\r\n    \"value\": \"new-locker-id\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL}}/realms/019239c9-d69c-7cb5-ae6b-244997619778/users/019239e9-dc7c-79b0-a355-2b2ae5a2c1a1/resources/019239c9-d6b2-7c01-9ba9-7430fec4b18e",
+									"host": [
+										"{{BASE_URL}}"
+									],
+									"path": [
+										"realms",
+										"019239c9-d69c-7cb5-ae6b-244997619778",
+										"users",
+										"019239e9-dc7c-79b0-a355-2b2ae5a2c1a1",
+										"resources",
+										"019239c9-d6b2-7c01-9ba9-7430fec4b18e"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get Realms",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/realms",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Realm by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/realms/{{REALM_ID}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"{{REALM_ID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Realm",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"SocietyGEN\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Realm",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"SocietyGEN Dev\",\r\n    \"lock\": false\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms/019239dd-5485-776c-bb18-e569f92e612a",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"019239dd-5485-776c-bb18-e569f92e612a"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Realm",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/realms/019239dd-eccd-7dc0-9cf1-487532d1ff96",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"019239dd-eccd-7dc0-9cf1-487532d1ff96"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"appu@mksingh.in\",\r\n    \"password\": \"12345\",\r\n    \"first_name\": \"Appu\",\r\n    \"last_name\": \"Singh\",\r\n    \"resource\": {\r\n        \"group_name\": \"AutomationTank\",\r\n        \"identifiers\": \r\n            {\r\n                \"society\": \"01923863-ea6e-8679-7ec5-7c044ecd8895\",\r\n                \"membership\": \"01923863-ea6e-7ec5-8679-7c044ecd8896\",\r\n                \"employee\": \"01923863-ea6e-8679-7ec5-7c044ecd8897\"\r\n            }\r\n        \r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}/auth/register",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"{{REALM_ID}}",
+								"clients",
+								"{{CLIENT_ID}}",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body has required properties\", function () {\r",
+									"    var responseJSON = pm.response.json();\r",
+									"    pm.expect(responseJSON).to.have.property('access_token');\r",
+									"    pm.expect(responseJSON).to.have.property('user');\r",
+									"    pm.expect(responseJSON).to.have.property('realm_id');\r",
+									"    pm.expect(responseJSON).to.have.property('client_id');\r",
+									"});\r",
+									"\r",
+									"// Store the access_token in the TOKEN environment variable\r",
+									"var responseJSON = pm.response.json();\r",
+									"var accessToken = responseJSON.access_token;\r",
+									"// var refreshToken = responseJSON.refresh_token;\r",
+									"var payload = accessToken.split('.')[1];\r",
+									"var decodedPayload = atob(payload);\r",
+									"var userId = JSON.parse(decodedPayload)?.sub;\r",
+									"\r",
+									"pm.environment.set(\"ACCESS_TOKEN\", accessToken);\r",
+									"// pm.environment.set(\"REFRESH_TOKEN\", refreshToken);\r",
+									"pm.environment.set(\"USER_ID\", userId);\r",
+									"pm.environment.set(\"REALM_ID\", responseJSON.realm_id);\r",
+									"pm.environment.set(\"CLIENT_ID\", responseJSON.client_id);\r",
+									"\r",
+									"pm.test(\"Access token is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"ACCESS_TOKEN\")).to.exist;\r",
+									"});\r",
+									"\r",
+									"// pm.test(\"Refresh token is stored in environment variable\", function () {\r",
+									"//     pm.expect(pm.environment.get(\"REFRESH_TOKEN\")).to.exist;\r",
+									"// });\r",
+									"\r",
+									"pm.test(\"User ID is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"USER_ID\")).to.exist;\r",
+									"})\r",
+									"pm.test(\"Realm ID is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"REALM_ID\")).to.exist;\r",
+									"})\r",
+									"pm.test(\"Client ID is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"CLIENT_ID\")).to.exist;\r",
+									"})\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"admin@admin.com\",\r\n    // \"email\": \"appu@mksingh.in\",\r\n    \"password\": \"12345\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms/{{MASTER_REALM_ID}}/clients/{{MASTER_CLIENT_ID}}/auth/login",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"{{MASTER_REALM_ID}}",
+								"clients",
+								"{{MASTER_CLIENT_ID}}",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout Current Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body has required properties\", function () {\r",
+									"    var responseJSON = pm.response.json();\r",
+									"    pm.expect(responseJSON).to.have.property('ok');\r",
+									"    pm.expect(responseJSON).to.have.property('user_id');\r",
+									"    pm.expect(responseJSON).to.have.property('session_id');\r",
+									"});\r",
+									"\r",
+									"// Store the access_token in the TOKEN environment variable\r",
+									"var responseJSON = pm.response.json();\r",
+									"var ok = responseJSON.ok;\r",
+									"\r",
+									"if (ok) {\r",
+									"    pm.environment.unset(\"ACCESS_TOKEN\");\r",
+									"}\r",
+									"\r",
+									"pm.test(\"Access token is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"ACCESS_TOKEN\")).to.undefined;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms/{{MASTER_REALM_ID}}/clients/{{MASTER_CLIENT_ID}}/auth/logout",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"{{MASTER_REALM_ID}}",
+								"clients",
+								"{{MASTER_CLIENT_ID}}",
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout One Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body has required properties\", function () {\r",
+									"    var responseJSON = pm.response.json();\r",
+									"    pm.expect(responseJSON).to.have.property('ok');\r",
+									"    pm.expect(responseJSON).to.have.property('user_id');\r",
+									"    pm.expect(responseJSON).to.have.property('session_id');\r",
+									"});\r",
+									"\r",
+									"// Store the access_token in the TOKEN environment variable\r",
+									"var responseJSON = pm.response.json();\r",
+									"var ok = responseJSON.ok;\r",
+									"\r",
+									"if (ok) {\r",
+									"    pm.environment.unset(\"ACCESS_TOKEN\");\r",
+									"}\r",
+									"\r",
+									"pm.test(\"Access token is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"ACCESS_TOKEN\")).to.undefined;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"access_token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3Mjc2MjE3NjgsImlhdCI6MTcyNzYyMTQ2OCwic3ViIjoiMDE5MjNkZGQtNGFiOC03NzE3LTk5MjgtNWYzNDA0MGU4Y2ZlIiwic2lkIjoiMDE5MjNlNDMtOTEzYi03MzI4LTg2ZTMtNzIwZTNlNzljYjcxIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo1NTU1IiwiZmlyc3RfbmFtZSI6ImFkbWluQGFkbWluLmNvbSIsImxhc3RfbmFtZSI6IiIsImVtYWlsIjoiYWRtaW5AYWRtaW4uY29tIiwicGhvbmUiOiIiLCJyZXNvdXJjZSI6eyJjbGllbnRfaWQiOiIwMTkyM2RkZC00YWFlLTdlNGUtOWE3Zi1iOTU0NjBjNmYwODMiLCJjbGllbnRfbmFtZSI6ImNsaWVudCIsImdyb3VwX25hbWUiOiJkZWZhdWx0X3Jlc291cmNlX2dyb3VwIiwiaWRlbnRpZmllcnMiOnsicm9sZSI6ImFkbWluIiwicmVhbG0iOiIwMTkyM2RkZC00YWE4LTcwYWYtYjEzNC03YjRkNDBjNzc2MGQifX19.00MS10w-KHmz6hr4AT9MPvWy0VeDZbA_nVmmBgEcfYE\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms/{{MASTER_REALM_ID}}/clients/{{MASTER_CLIENT_ID}}/auth/logout",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"{{MASTER_REALM_ID}}",
+								"clients",
+								"{{MASTER_CLIENT_ID}}",
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Introspect Access Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body has required properties\", function () {\r",
+									"    var responseJSON = pm.response.json();\r",
+									"    pm.expect(responseJSON).to.have.property('active');\r",
+									"    pm.expect(responseJSON).to.have.property('sub');\r",
+									"    pm.expect(responseJSON).to.have.property('client_id');\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"access_token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3Mjc3MTkyOTYsImlhdCI6MTcyNzcxODk5Niwic3ViIjoiMDE5MjQ0MGItYjFjNi03OGQxLWI0ZWEtZjZkYzBmZGI0MmVkIiwic2lkIjoiMDE5MjQ0MGItYjFlYy03Y2MxLThkYmYtNTE0OWE0N2JiMDk0IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo1NTU1IiwiZmlyc3RfbmFtZSI6ImFkbWluQGFkbWluLmNvbSIsImxhc3RfbmFtZSI6IiIsImVtYWlsIjoiYWRtaW5AYWRtaW4uY29tIiwicGhvbmUiOiIiLCJyZXNvdXJjZSI6eyJjbGllbnRfaWQiOiIwMTkyNDQwYi1iMWI2LTdjYjEtOTllNS00ZjAzODk4NTYxN2MiLCJjbGllbnRfbmFtZSI6ImNsaWVudCIsImdyb3VwX25hbWUiOiJkZWZhdWx0X3Jlc291cmNlX2dyb3VwIiwiaWRlbnRpZmllcnMiOnsicm9sZSI6ImFkbWluIiwicmVhbG0iOiIwMTkyNDQwYi1iMWE2LTc5MTAtOWNkMy03ZDFiMWQxZmZmNjMifX19.X6pQtYHcktrtAUccPLR_SfNNzuox-JA8PbizdRLc2e8\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms/{{MASTER_REALM_ID}}/clients/{{MASTER_CLIENT_ID}}/auth/introspect",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"{{MASTER_REALM_ID}}",
+								"clients",
+								"{{MASTER_CLIENT_ID}}",
+								"auth",
+								"introspect"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout All Sessions - Current Client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body has required properties\", function () {\r",
+									"    var responseJSON = pm.response.json();\r",
+									"    pm.expect(responseJSON).to.have.property('ok');\r",
+									"    pm.expect(responseJSON).to.have.property('user_id');\r",
+									"    pm.expect(responseJSON).to.have.property('session_id');\r",
+									"});\r",
+									"\r",
+									"// Store the access_token in the TOKEN environment variable\r",
+									"var responseJSON = pm.response.json();\r",
+									"var ok = responseJSON.ok;\r",
+									"\r",
+									"if (ok) {\r",
+									"    pm.environment.unset(\"ACCESS_TOKEN\");\r",
+									"}\r",
+									"\r",
+									"pm.test(\"Access token is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"ACCESS_TOKEN\")).to.undefined;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms/{{MASTER_REALM_ID}}/clients/{{MASTER_CLIENT_ID}}/auth/logout-all",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"{{MASTER_REALM_ID}}",
+								"clients",
+								"{{MASTER_CLIENT_ID}}",
+								"auth",
+								"logout-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout All Sessions - One Client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body has required properties\", function () {\r",
+									"    var responseJSON = pm.response.json();\r",
+									"    pm.expect(responseJSON).to.have.property('ok');\r",
+									"    pm.expect(responseJSON).to.have.property('user_id');\r",
+									"    pm.expect(responseJSON).to.have.property('session_id');\r",
+									"});\r",
+									"\r",
+									"// Store the access_token in the TOKEN environment variable\r",
+									"var responseJSON = pm.response.json();\r",
+									"var ok = responseJSON.ok;\r",
+									"\r",
+									"if (ok) {\r",
+									"    pm.environment.unset(\"ACCESS_TOKEN\");\r",
+									"}\r",
+									"\r",
+									"pm.test(\"Access token is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"ACCESS_TOKEN\")).to.undefined;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"access_token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3Mjc2MjIxMDUsImlhdCI6MTcyNzYyMTgwNSwic3ViIjoiMDE5MjNkZGQtNGFiOC03NzE3LTk5MjgtNWYzNDA0MGU4Y2ZlIiwic2lkIjoiMDE5MjNlNDgtYjcxMS03NzZhLWIwOGEtZDhjOTg0YTBlNDI4IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo1NTU1IiwiZmlyc3RfbmFtZSI6ImFkbWluQGFkbWluLmNvbSIsImxhc3RfbmFtZSI6IiIsImVtYWlsIjoiYWRtaW5AYWRtaW4uY29tIiwicGhvbmUiOiIiLCJyZXNvdXJjZSI6eyJjbGllbnRfaWQiOiIwMTkyM2RkZC00YWFlLTdlNGUtOWE3Zi1iOTU0NjBjNmYwODMiLCJjbGllbnRfbmFtZSI6ImNsaWVudCIsImdyb3VwX25hbWUiOiJkZWZhdWx0X3Jlc291cmNlX2dyb3VwIiwiaWRlbnRpZmllcnMiOnsicmVhbG0iOiIwMTkyM2RkZC00YWE4LTcwYWYtYjEzNC03YjRkNDBjNzc2MGQiLCJyb2xlIjoiYWRtaW4ifX19._G0ujBxVZVwWoPvzY7qQePt3tMD7gMrBrUVhB5yVhCo\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms/{{MASTER_REALM_ID}}/clients/{{MASTER_CLIENT_ID}}/auth/logout-all",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"{{MASTER_REALM_ID}}",
+								"clients",
+								"{{MASTER_CLIENT_ID}}",
+								"auth",
+								"logout-all"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Get Health",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/health",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{ACCESS_TOKEN}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

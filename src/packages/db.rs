@@ -18,6 +18,7 @@ pub async fn get_db_connection_pool() -> Result<AppState, DbErr> {
     let mut opts = ConnectOptions::new(&connection_string);
     opts.max_connections(20).connect_timeout(Duration::from_secs(5));
 
+    println!("🚀 Connecting to the database..., {}", connection_string);
     let db = Database::connect(uri).await?;
     let db = match db.get_database_backend() {
         DbBackend::MySql => {

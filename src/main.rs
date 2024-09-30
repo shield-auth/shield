@@ -17,7 +17,7 @@ mod utils;
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let port = SETTINGS.read().server.port;
-    let address = SocketAddr::from(([127, 0, 0, 1], port));
+    let address = SocketAddr::from(([0, 0, 0, 0], port));
 
     let app = create_app().await;
     let listener = TcpListener::bind(address).await?;
