@@ -8,11 +8,8 @@ use serde::Serialize;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    #[sea_orm(unique)]
     pub realm_id: Uuid,
-    #[sea_orm(unique)]
     pub client_id: Uuid,
-    #[sea_orm(unique)]
     pub user_id: Uuid,
     pub name: String,
     pub description: Option<String>,

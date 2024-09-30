@@ -19,7 +19,6 @@ pub struct Model {
     pub password_hash: Option<String>,
     pub is_temp_password: bool,
     pub locked_at: Option<DateTimeWithTimeZone>,
-    #[sea_orm(unique)]
     pub realm_id: Uuid,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
@@ -35,7 +34,7 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Realm,
-    #[sea_orm(has_one = "super::resource_group::Entity")]
+    #[sea_orm(has_many = "super::resource_group::Entity")]
     ResourceGroup,
     #[sea_orm(has_many = "super::session::Entity")]
     Session,

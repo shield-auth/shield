@@ -8,7 +8,6 @@ use serde::Serialize;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    #[sea_orm(unique)]
     pub name: String,
     pub two_factor_enabled_at: Option<DateTimeWithTimeZone>,
     pub max_concurrent_sessions: i32,
@@ -16,7 +15,6 @@ pub struct Model {
     pub refresh_token_lifetime: i32,
     pub refresh_token_reuse_limit: i32,
     pub locked_at: Option<DateTimeWithTimeZone>,
-    #[sea_orm(unique)]
     pub realm_id: Uuid,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
@@ -32,7 +30,7 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Realm,
-    #[sea_orm(has_one = "super::resource_group::Entity")]
+    #[sea_orm(has_many = "super::resource_group::Entity")]
     ResourceGroup,
     #[sea_orm(has_many = "super::session::Entity")]
     Session,

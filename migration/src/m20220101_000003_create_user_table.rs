@@ -24,7 +24,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(User::PasswordHash).string())
                     .col(ColumnDef::new(User::IsTempPassword).boolean().not_null().default(true))
                     .col(ColumnDef::new(User::LockedAt).timestamp_with_time_zone())
-                    .col(ColumnDef::new(User::RealmId).uuid().not_null().unique_key())
+                    .col(ColumnDef::new(User::RealmId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_user_realm_id")
