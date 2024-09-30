@@ -19,6 +19,7 @@ pub async fn insert_user(db: &DatabaseConnection, realm_id: Uuid, client_id: Uui
     let user = user.insert(db).await?;
 
     let resource_group = resource_group::ActiveModel {
+        id: Set(Uuid::now_v7()),
         realm_id: Set(user.realm_id),
         client_id: Set(client_id),
         user_id: Set(user.id),
@@ -33,6 +34,7 @@ pub async fn insert_user(db: &DatabaseConnection, realm_id: Uuid, client_id: Uui
         .iter()
         .map(|(name, value)| {
             let resource = resource::ActiveModel {
+                id: Set(Uuid::now_v7()),
                 group_id: Set(resource_group.id),
                 name: Set(name.to_string()),
                 value: Set(value.to_string()),

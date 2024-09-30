@@ -18,6 +18,7 @@ pub async fn get_realm_by_id(db: &DatabaseConnection, id: Uuid) -> Result<Option
 
 pub async fn insert_realm(db: &DatabaseConnection, name: String) -> Result<realm::Model, Error> {
     let realm = realm::ActiveModel {
+        id: Set(Uuid::now_v7()),
         name: Set(name),
         ..Default::default()
     };

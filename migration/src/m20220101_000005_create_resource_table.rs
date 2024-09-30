@@ -13,7 +13,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Resource::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Resource::Id).uuid().not_null().primary_key().default(Uuid::now_v7()))
+                    .col(ColumnDef::new(Resource::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Resource::GroupId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()

@@ -13,7 +13,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Client::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Client::Id).uuid().not_null().primary_key().default(Uuid::now_v7()))
+                    .col(ColumnDef::new(Client::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Client::Name).string().unique_key().not_null())
                     .col(ColumnDef::new(Client::TwoFactorEnabledAt).timestamp_with_time_zone())
                     .col(ColumnDef::new(Client::MaxConcurrentSessions).integer().not_null().default(1))

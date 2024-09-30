@@ -18,6 +18,7 @@ pub async fn get_client_by_id(db: &DatabaseConnection, client_id: Uuid) -> Resul
 
 pub async fn insert_client(db: &DatabaseConnection, payload: CreateClientRequest) -> Result<client::Model, Error> {
     let client = client::ActiveModel {
+        id: Set(Uuid::now_v7()),
         name: Set(payload.name.to_owned()),
         realm_id: Set(payload.realm_id),
         ..Default::default()

@@ -66,6 +66,7 @@ async fn initialize_db(conn: &DatabaseConnection) -> Result<(), TransactionError
 
 async fn create_master_realm(conn: &DatabaseTransaction) -> Result<realm::Model, Error> {
     let realm_model = realm::ActiveModel {
+        id: Set(Uuid::now_v7()),
         name: Set("Master".to_owned()),
         ..Default::default()
     };
@@ -77,6 +78,7 @@ async fn create_master_realm(conn: &DatabaseTransaction) -> Result<realm::Model,
 
 async fn create_default_client(conn: &DatabaseTransaction, realm_id: Uuid) -> Result<client::Model, Error> {
     let client_model = client::ActiveModel {
+        id: Set(Uuid::now_v7()),
         name: Set("client".to_owned()),
         realm_id: Set(realm_id),
         ..Default::default()
@@ -91,6 +93,7 @@ async fn create_admin_user(conn: &DatabaseTransaction, realm_id: Uuid) -> Result
     let admin = SETTINGS.read().admin.clone();
     let pw_hash = generate_password_hash(admin.password).await?;
     let user_model = user::ActiveModel {
+        id: Set(Uuid::now_v7()),
         email: Set(admin.email.to_owned()),
         password_hash: Set(Some(pw_hash)),
         realm_id: Set(realm_id),

@@ -14,7 +14,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Session::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Session::Id).uuid().not_null().primary_key().default(Uuid::now_v7()))
+                    .col(ColumnDef::new(Session::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Session::ClientId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()

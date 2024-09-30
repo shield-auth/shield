@@ -214,6 +214,7 @@ pub async fn add_resources(
                 .iter()
                 .map(|(name, value)| {
                     let resource = resource::ActiveModel {
+                        id: Set(Uuid::now_v7()),
                         group_id: Set(payload.group_id.unwrap()),
                         name: Set(name.to_string()),
                         value: Set(value.to_string()),
@@ -241,6 +242,7 @@ pub async fn add_resources(
                 .iter()
                 .map(|(name, value)| {
                     let resource = resource::ActiveModel {
+                        id: Set(Uuid::now_v7()),
                         group_id: Set(resource_group.id),
                         name: Set(name.to_string()),
                         value: Set(value.to_string()),

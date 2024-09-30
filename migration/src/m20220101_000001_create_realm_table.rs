@@ -12,7 +12,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Realm::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Realm::Id).uuid().not_null().primary_key().default(Uuid::now_v7()))
+                    .col(ColumnDef::new(Realm::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Realm::Name).string().unique_key().not_null())
                     .col(ColumnDef::new(Realm::Slug).string().unique_key().not_null())
                     .col(ColumnDef::new(Realm::MaxConcurrentSessions).integer())

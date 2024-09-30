@@ -15,7 +15,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(ResourceGroup::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(ResourceGroup::Id).uuid().not_null().primary_key().default(Uuid::now_v7()))
+                    .col(ColumnDef::new(ResourceGroup::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(ResourceGroup::RealmId).uuid().not_null().unique_key())
                     .foreign_key(
                         ForeignKey::create()
