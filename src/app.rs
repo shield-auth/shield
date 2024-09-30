@@ -4,7 +4,7 @@ use axum::{http::header, Extension, Router};
 use tower_http::{
     compression::CompressionLayer, cors::CorsLayer, propagate_header::PropagateHeaderLayer, sensitive_headers::SetSensitiveHeadersLayer,
 };
-use tracing::info;
+use tracing::{error, info};
 
 use crate::{
     middleware::logger::logger,
@@ -14,7 +14,12 @@ use crate::{
 
 pub async fn create_app() -> Router {
     logger::setup();
-    let state = Arc::new(get_db_connection_pool().await.unwrap());
+    let state = Arc::new(
+        get_db_connection_pool()
+            .await
+            .map_err(|e| error!("⛑️ Failed to get database connection pool: {}", e))
+            .unwrap(),
+    );
 
     let is_settings_reloaded = admin::setup(&state).await.expect("Failed to setup admin account");
     if is_settings_reloaded {

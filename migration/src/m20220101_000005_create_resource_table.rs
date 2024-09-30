@@ -18,8 +18,8 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_resource_group_id")
-                            .from(ResourceGroup::Table, ResourceGroup::Id)
-                            .to(Resource::Table, Resource::GroupId)
+                            .from(Resource::Table, Resource::GroupId)
+                            .to(ResourceGroup::Table, ResourceGroup::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(Resource::Name).string().not_null())

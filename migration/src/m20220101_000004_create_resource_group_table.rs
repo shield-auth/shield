@@ -16,28 +16,28 @@ impl MigrationTrait for Migration {
                     .table(ResourceGroup::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(ResourceGroup::Id).uuid().not_null().primary_key())
-                    .col(ColumnDef::new(ResourceGroup::RealmId).uuid().not_null().unique_key())
+                    .col(ColumnDef::new(ResourceGroup::RealmId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_resource_group_realm_id")
-                            .from(Realm::Table, Realm::Id)
-                            .to(ResourceGroup::Table, ResourceGroup::RealmId)
+                            .from(ResourceGroup::Table, ResourceGroup::RealmId)
+                            .to(Realm::Table, Realm::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
-                    .col(ColumnDef::new(ResourceGroup::ClientId).uuid().not_null().unique_key())
+                    .col(ColumnDef::new(ResourceGroup::ClientId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_resource_group_client_id")
-                            .from(Client::Table, Client::Id)
-                            .to(ResourceGroup::Table, ResourceGroup::ClientId)
+                            .from(ResourceGroup::Table, ResourceGroup::ClientId)
+                            .to(Client::Table, Client::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
-                    .col(ColumnDef::new(ResourceGroup::UserId).uuid().not_null().unique_key())
+                    .col(ColumnDef::new(ResourceGroup::UserId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_resource_group_user_id")
-                            .from(User::Table, User::Id)
-                            .to(ResourceGroup::Table, ResourceGroup::UserId)
+                            .from(ResourceGroup::Table, ResourceGroup::UserId)
+                            .to(User::Table, User::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(ResourceGroup::Name).string().not_null())

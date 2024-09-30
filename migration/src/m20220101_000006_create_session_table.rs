@@ -27,8 +27,8 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_session_user_id")
-                            .from(User::Table, User::Id)
-                            .to(Session::Table, Session::UserId)
+                            .from(Session::Table, Session::UserId)
+                            .to(User::Table, User::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(Session::IpAddress).string().not_null())
