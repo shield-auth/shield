@@ -1,6 +1,6 @@
 use super::m20220101_000002_create_client_table::Client;
 use super::m20220101_000003_create_user_table::User;
-use sea_orm::{prelude::Uuid, sqlx::types::chrono};
+use sea_orm::sqlx::types::chrono;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

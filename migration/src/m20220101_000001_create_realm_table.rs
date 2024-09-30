@@ -1,4 +1,4 @@
-use sea_orm::{prelude::Uuid, sqlx::types::chrono};
+use sea_orm::sqlx::types::chrono;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

@@ -1,5 +1,5 @@
 use super::m20220101_000001_create_realm_table::Realm;
-use sea_orm::{prelude::Uuid, sqlx::types::chrono};
+use sea_orm::sqlx::types::chrono;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

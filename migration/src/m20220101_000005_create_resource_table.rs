@@ -1,5 +1,5 @@
 use super::m20220101_000004_create_resource_group_table::ResourceGroup;
-use sea_orm::{prelude::Uuid, sqlx::types::chrono};
+use sea_orm::sqlx::types::chrono;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

@@ -119,6 +119,7 @@ async fn assign_resource_to_admin(
     user_id: Uuid,
 ) -> Result<ResourceAssignmentResult, Error> {
     let resource_group_model = resource_group::ActiveModel {
+        id: Set(Uuid::now_v7()),
         client_id: Set(client_id),
         realm_id: Set(realm_id),
         user_id: Set(user_id),
