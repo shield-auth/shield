@@ -19,16 +19,16 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_session_client_id")
-                            .from(Session::Table, Session::ClientId)
-                            .to(Client::Table, Client::Id)
+                            .from(Client::Table, Client::Id)
+                            .to(Session::Table, Session::ClientId)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(Session::UserId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_session_user_id")
-                            .from(Session::Table, Session::UserId)
-                            .to(User::Table, User::Id)
+                            .from(User::Table, User::Id)
+                            .to(Session::Table, Session::UserId)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(Session::IpAddress).string().not_null())

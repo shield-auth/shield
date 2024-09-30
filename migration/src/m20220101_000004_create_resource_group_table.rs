@@ -20,24 +20,24 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_resource_group_realm_id")
-                            .from(ResourceGroup::Table, ResourceGroup::RealmId)
-                            .to(Realm::Table, Realm::Id)
+                            .from(Realm::Table, Realm::Id)
+                            .to(ResourceGroup::Table, ResourceGroup::RealmId)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(ResourceGroup::ClientId).uuid().not_null().unique_key())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_resource_group_client_id")
-                            .from(ResourceGroup::Table, ResourceGroup::ClientId)
-                            .to(Client::Table, Client::Id)
+                            .from(Client::Table, Client::Id)
+                            .to(ResourceGroup::Table, ResourceGroup::ClientId)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(ResourceGroup::UserId).uuid().not_null().unique_key())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_resource_group_user_id")
-                            .from(ResourceGroup::Table, ResourceGroup::UserId)
-                            .to(User::Table, User::Id)
+                            .from(User::Table, User::Id)
+                            .to(ResourceGroup::Table, ResourceGroup::UserId)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(ResourceGroup::Name).string().not_null())

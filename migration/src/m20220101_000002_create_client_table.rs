@@ -25,8 +25,8 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_client_realm_id")
-                            .from(Client::Table, Client::RealmId)
-                            .to(Realm::Table, Realm::Id)
+                            .from(Realm::Table, Realm::Id)
+                            .to(Client::Table, Client::RealmId)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(

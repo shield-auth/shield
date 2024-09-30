@@ -6,6 +6,7 @@ use sea_orm::{prelude::Uuid, ActiveModelTrait, DatabaseConnection, Set};
 pub async fn insert_user(db: &DatabaseConnection, realm_id: Uuid, client_id: Uuid, payload: CreateUserRequest) -> Result<user::Model, Error> {
     let password_hash = generate_password_hash(payload.password).await?;
     let user = user::ActiveModel {
+        id: Set(Uuid::now_v7()),
         realm_id: Set(realm_id),
         email: Set(payload.email),
         password_hash: Set(Some(password_hash)),
