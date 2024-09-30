@@ -40,7 +40,7 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Realm,
-    #[sea_orm(has_one = "super::resource::Entity")]
+    #[sea_orm(has_many = "super::resource::Entity")]
     Resource,
     #[sea_orm(
         belongs_to = "super::user::Entity",

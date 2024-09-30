@@ -16,7 +16,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Client::Id).uuid().not_null().primary_key().default(Uuid::now_v7()))
                     .col(ColumnDef::new(Client::Name).string().unique_key().not_null())
                     .col(ColumnDef::new(Client::TwoFactorEnabledAt).timestamp_with_time_zone())
-                    .col(ColumnDef::new(Client::MaxConcurrentSessions).integer())
+                    .col(ColumnDef::new(Client::MaxConcurrentSessions).integer().not_null().default(1))
                     .col(ColumnDef::new(Client::SessionLifetime).integer().not_null().default(300))
                     .col(ColumnDef::new(Client::RefreshTokenLifetime).integer().not_null().default(3600))
                     .col(ColumnDef::new(Client::RefreshTokenReuseLimit).integer().not_null().default(0))
