@@ -4,19 +4,20 @@ use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize)]
-#[sea_orm(table_name = "resource_group")]
+#[sea_orm(table_name = "session")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub realm_id: Uuid,
     pub client_id: Uuid,
     pub user_id: Uuid,
-    #[sea_orm(column_type = "Text")]
-    pub name: String,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub description: Option<String>,
-    pub is_default: Option<bool>,
-    pub locked_at: Option<DateTimeWithTimeZone>,
+    pub ip_address: String,
+    pub user_agent: Option<String>,
+    pub browser: Option<String>,
+    pub browser_version: Option<String>,
+    pub operating_system: Option<String>,
+    pub device_type: Option<String>,
+    pub country_code: String,
+    pub expires: DateTimeWithTimeZone,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
 }
@@ -31,16 +32,6 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Client,
-    #[sea_orm(
-        belongs_to = "super::realm::Entity",
-        from = "Column::RealmId",
-        to = "super::realm::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
-    Realm,
-    #[sea_orm(has_many = "super::resource::Entity")]
-    Resource,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -57,22 +48,8 @@ impl Related<super::client::Entity> for Entity {
     }
 }
 
-impl Related<super::realm::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Realm.def()
-    }
-}
-
-impl Related<super::resource::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Resource.def()
-    }
-}
-
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
     }
 }
-
-impl ActiveModelBehavior for ActiveModel {}

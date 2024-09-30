@@ -9,11 +9,8 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub group_id: Uuid,
-    #[sea_orm(column_type = "Text")]
     pub name: String,
-    #[sea_orm(column_type = "Text")]
     pub value: String,
-    #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
     pub locked_at: Option<DateTimeWithTimeZone>,
     pub created_at: DateTimeWithTimeZone,
@@ -37,5 +34,3 @@ impl Related<super::resource_group::Entity> for Entity {
         Relation::ResourceGroup.def()
     }
 }
-
-impl ActiveModelBehavior for ActiveModel {}

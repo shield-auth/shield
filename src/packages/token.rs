@@ -4,10 +4,7 @@ use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::database::{
-    client::Model as ClientModel, resource::Model as ResourceModel, resource_group::Model as ResourceGroupModel, session::Model as SessionModel,
-    user::Model as UserModel,
-};
+use entity::{client, resource, resource_group, session, user};
 
 use super::settings::SETTINGS;
 
@@ -25,7 +22,7 @@ pub struct Resource {
 }
 
 impl Resource {
-    fn from(client: ClientModel, resource_group: ResourceGroupModel, resources: Vec<ResourceModel>) -> Self {
+    fn from(client: client::Model, resource_group: resource_group::Model, resources: Vec<resource::Model>) -> Self {
         let mut identifiers = HashMap::new();
         for resource in resources {
             identifiers.insert(resource.name, resource.value);
@@ -55,7 +52,13 @@ pub struct TokenUser {
 }
 
 impl TokenUser {
-    fn from(user: UserModel, client: ClientModel, resource_group: ResourceGroupModel, resources: Vec<ResourceModel>, session: &SessionModel) -> Self {
+    fn from(
+        user: user::Model,
+        client: client::Model,
+        resource_group: resource_group::Model,
+        resources: Vec<resource::Model>,
+        session: &session::Model,
+    ) -> Self {
         Self {
             sub: user.id,
             sid: session.id,
@@ -96,11 +99,11 @@ pub struct Claims {
 
 impl Claims {
     pub fn new(
-        user: UserModel,
-        client: ClientModel,
-        resource_group: ResourceGroupModel,
-        resources: Vec<ResourceModel>,
-        session: SessionModel,
+        user: user::Model,
+        client: client::Model,
+        resource_group: resource_group::Model,
+        resources: Vec<resource::Model>,
+        session: session::Model,
     ) -> Self {
         let user = TokenUser::from(user, client, resource_group, resources, &session);
 
@@ -120,11 +123,11 @@ impl Claims {
 }
 
 pub fn create(
-    user: UserModel,
-    client: ClientModel,
-    resource_group: ResourceGroupModel,
-    resources: Vec<ResourceModel>,
-    session: SessionModel,
+    user: user::Model,
+    client: client::Model,
+    resource_group: resource_group::Model,
+    resources: Vec<resource::Model>,
+    session: session::Model,
     secret: &str,
 ) -> Result<String, Error> {
     let encoding_key = EncodingKey::from_secret(secret.as_ref());

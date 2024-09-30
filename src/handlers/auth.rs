@@ -1,15 +1,9 @@
 use chrono::Utc;
+use entity::{client, resource, resource_group, session, user};
 use sea_orm::{ActiveModelTrait, Set};
 use std::sync::Arc;
 
 use crate::{
-    database::{
-        client,
-        prelude::{Client, Resource, ResourceGroup, Session, User},
-        resource, resource_group,
-        session::{self, ActiveModel as SessionActiveModel},
-        user::{self, Model},
-    },
     mappers::auth::{CreateUserRequest, IntrospectRequest, IntrospectResponse, LogoutRequest, LogoutResponse},
     middleware::session_info_extractor::SessionInfo,
     packages::{
@@ -35,7 +29,7 @@ pub struct Credentials {
 #[derive(Serialize)]
 pub struct LoginResponse {
     access_token: String,
-    user: Model,
+    user: user::Model,
     realm_id: Uuid,
     client_id: Uuid,
 }
@@ -47,9 +41,9 @@ pub async fn login(
     Json(payload): Json<Credentials>,
 ) -> Result<Json<LoginResponse>, Error> {
     debug!("🚀 Login request received! {:#?}", session_info);
-    let user_with_resource_groups = User::find()
+    let user_with_resource_groups = user::Entity::find()
         .filter(user::Column::Email.eq(payload.email))
-        .find_also_related(ResourceGroup)
+        .find_also_related(resource_group::Entity)
         .filter(resource_group::Column::RealmId.eq(realm_id))
         .filter(resource_group::Column::ClientId.eq(client_id))
         .one(&state.db)
@@ -82,7 +76,7 @@ pub async fn login(
     }
 
     // Fetch client separately
-    let client = Client::find_by_id(client_id).one(&state.db).await?.ok_or_else(|| {
+    let client = client::Entity::find_by_id(client_id).one(&state.db).await?.ok_or_else(|| {
         debug!("No client found");
         Error::not_found()
     })?;
@@ -92,7 +86,7 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
-    let sessions = Session::find()
+    let sessions = session::Entity::find()
         .filter(session::Column::ClientId.eq(client.id))
         .filter(session::Column::UserId.eq(user.id))
         .filter(session::Column::Expires.gt(chrono::Utc::now()))
@@ -103,8 +97,9 @@ pub async fn login(
         debug!("Client has reached max concurrent sessions");
         return Err(Error::Authenticate(AuthenticateError::MaxConcurrentSessions));
     }
+
     // Fetch resources
-    let resources = Resource::find()
+    let resources = resource::Entity::find()
         .filter(resource::Column::GroupId.eq(resource_groups.id))
         .filter(resource::Column::LockedAt.is_null())
         .all(&state.db)
@@ -115,7 +110,8 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
-    let session = SessionActiveModel {
+    let session_model = session::ActiveModel {
+        id: Set(Uuid::now_v7()),
         user_id: Set(user.id),
         client_id: Set(client.id),
         ip_address: Set(session_info.ip_address.to_string()),
@@ -124,11 +120,11 @@ pub async fn login(
         browser_version: Set(Some(session_info.browser_version.to_string())),
         operating_system: Set(Some(session_info.operating_system.to_string())),
         device_type: Set(Some(session_info.device_type.to_string())),
-        country_code: Set(Some(session_info.country_code.to_string())),
+        country_code: Set(session_info.country_code.to_string()),
         expires: Set((Utc::now() + chrono::Duration::seconds(client.session_lifetime as i64)).into()),
         ..Default::default()
     };
-    let session = session.insert(&state.db).await?;
+    let session = session_model.insert(&state.db).await?;
 
     let access_token = create(
         user.clone(),
@@ -153,7 +149,7 @@ pub async fn register(
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<CreateUserRequest>,
-) -> Result<Json<Model>, Error> {
+) -> Result<Json<user::Model>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
         let user = insert_user(&state.db, realm_id, client_id, payload).await?;
         Ok(Json(user))
@@ -163,7 +159,7 @@ pub async fn register(
 }
 
 pub async fn logout_current_session(user: TokenUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<LogoutResponse>, Error> {
-    let result = Session::delete_by_id(user.sid).exec(&state.db).await?;
+    let result = session::Entity::delete_by_id(user.sid).exec(&state.db).await?;
     Ok(Json(LogoutResponse {
         ok: result.rows_affected == 1,
         user_id: user.sub,
@@ -184,7 +180,7 @@ pub async fn logout(
                     .map_err(|_| AuthenticateError::InvalidToken)?
                     .claims
                     .sid;
-                let result = Session::delete_by_id(sid).exec(&state.db).await?;
+                let result = session::Entity::delete_by_id(sid).exec(&state.db).await?;
                 Ok(Json(LogoutResponse {
                     ok: result.rows_affected == 1,
                     user_id: user.sub,
@@ -197,7 +193,7 @@ pub async fn logout(
                         .map_err(|_| AuthenticateError::InvalidToken)?
                         .claims
                         .sid;
-                    let result = Session::delete_by_id(sid).exec(&state.db).await?;
+                    let result = session::Entity::delete_by_id(sid).exec(&state.db).await?;
                     Ok(Json(LogoutResponse {
                         ok: result.rows_affected == 1,
                         user_id: user.sub,
@@ -217,7 +213,7 @@ pub async fn logout_my_all_sessions(
     Extension(state): Extension<Arc<AppState>>,
     Path((_, client_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<LogoutResponse>, Error> {
-    let result = Session::delete_many()
+    let result = session::Entity::delete_many()
         .filter(session::Column::ClientId.eq(client_id))
         .filter(session::Column::UserId.eq(user.sub))
         .exec(&state.db)
@@ -242,7 +238,7 @@ pub async fn logout_all(
                     .map_err(|_| AuthenticateError::InvalidToken)?
                     .claims
                     .sub;
-                let result = Session::delete_many()
+                let result = session::Entity::delete_many()
                     .filter(session::Column::ClientId.eq(client_id))
                     .filter(session::Column::UserId.eq(sub))
                     .exec(&state.db)
@@ -259,7 +255,7 @@ pub async fn logout_all(
                         .map_err(|_| AuthenticateError::InvalidToken)?
                         .claims
                         .sub;
-                    let result = Session::delete_many()
+                    let result = session::Entity::delete_many()
                         .filter(session::Column::ClientId.eq(client_id))
                         .filter(session::Column::UserId.eq(sub))
                         .exec(&state.db)
@@ -292,24 +288,24 @@ pub async fn introspect(
             return Err(Error::Authenticate(AuthenticateError::NoResource));
         }
 
-        let session = Session::find_by_id(token_data.claims.sid).one(&state.db).await?;
+        let session = session::Entity::find_by_id(token_data.claims.sid).one(&state.db).await?;
         match session {
             Some(session) => {
-                let user = User::find_by_id(session.user_id)
+                let user = user::Entity::find_by_id(session.user_id)
                     .filter(user::Column::LockedAt.is_null())
                     .one(&state.db)
                     .await?;
 
                 match user {
                     Some(user) => {
-                        let client = Client::find_by_id(session.client_id)
+                        let client = client::Entity::find_by_id(session.client_id)
                             .filter(client::Column::LockedAt.is_null())
                             .one(&state.db)
                             .await?;
 
                         match client {
                             Some(client) => {
-                                let resource_group = ResourceGroup::find()
+                                let resource_group = resource_group::Entity::find()
                                     .filter(resource_group::Column::RealmId.eq(realm_id))
                                     .filter(resource_group::Column::ClientId.eq(client.id))
                                     .filter(resource_group::Column::UserId.eq(user.id))
@@ -319,7 +315,7 @@ pub async fn introspect(
 
                                 match resource_group {
                                     Some(resource_group) => {
-                                        let resources = Resource::find()
+                                        let resources = resource::Entity::find()
                                             .filter(resource::Column::GroupId.eq(resource_group.id))
                                             .filter(resource::Column::LockedAt.is_null())
                                             .all(&state.db)

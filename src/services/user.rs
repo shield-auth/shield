@@ -1,15 +1,12 @@
-use crate::{
-    database::{resource, resource_group, user},
-    mappers::auth::CreateUserRequest,
-    packages::errors::Error,
-    utils::hash::generate_password_hash,
-};
+use crate::{mappers::auth::CreateUserRequest, packages::errors::Error, utils::hash::generate_password_hash};
+use entity::{resource, resource_group, user};
 use futures::future::join_all;
 use sea_orm::{prelude::Uuid, ActiveModelTrait, DatabaseConnection, Set};
 
 pub async fn insert_user(db: &DatabaseConnection, realm_id: Uuid, client_id: Uuid, payload: CreateUserRequest) -> Result<user::Model, Error> {
     let password_hash = generate_password_hash(payload.password).await?;
-    let user = user::ActiveModel {
+    let user_model = user::ActiveModel {
+        id: Set(Uuid::now_v7()),
         realm_id: Set(realm_id),
         email: Set(payload.email),
         password_hash: Set(Some(password_hash)),
@@ -20,9 +17,10 @@ pub async fn insert_user(db: &DatabaseConnection, realm_id: Uuid, client_id: Uui
         ..Default::default()
     };
 
-    let user = user.insert(db).await?;
+    let user = user_model.insert(db).await?;
 
     let resource_group = resource_group::ActiveModel {
+        id: Set(Uuid::now_v7()),
         realm_id: Set(user.realm_id),
         client_id: Set(client_id),
         user_id: Set(user.id),
@@ -37,6 +35,7 @@ pub async fn insert_user(db: &DatabaseConnection, realm_id: Uuid, client_id: Uui
         .iter()
         .map(|(name, value)| {
             let resource = resource::ActiveModel {
+                id: Set(Uuid::now_v7()),
                 group_id: Set(resource_group.id),
                 name: Set(name.to_string()),
                 value: Set(value.to_string()),

@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use axum::{extract::Path, Extension, Json};
+use entity::realm;
 use sea_orm::prelude::Uuid;
 
 use crate::{
-    database::realm::Model,
     mappers::{
         realm::{CreateRealmRequest, UpdateRealmRequest},
         DeleteResponse,
@@ -21,7 +21,7 @@ use crate::{
     },
 };
 
-pub async fn get_realms(user: TokenUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<Vec<Model>>, Error> {
+pub async fn get_realms(user: TokenUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<Vec<realm::Model>>, Error> {
     if is_master_realm_admin(&user) {
         let realms = get_all_realms(&state.db).await?;
         if realms.is_empty() {
@@ -33,7 +33,7 @@ pub async fn get_realms(user: TokenUser, Extension(state): Extension<Arc<AppStat
     return Err(Error::Authenticate(AuthenticateError::NoResource));
 }
 
-pub async fn get_realm(user: TokenUser, Extension(state): Extension<Arc<AppState>>, Path(realm_id): Path<Uuid>) -> Result<Json<Model>, Error> {
+pub async fn get_realm(user: TokenUser, Extension(state): Extension<Arc<AppState>>, Path(realm_id): Path<Uuid>) -> Result<Json<realm::Model>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
         let fetched_realm = get_realm_by_id(&state.db, realm_id).await?;
         match fetched_realm {
@@ -51,7 +51,7 @@ pub async fn create_realm(
     user: TokenUser,
     Extension(state): Extension<Arc<AppState>>,
     Json(payload): Json<CreateRealmRequest>,
-) -> Result<Json<Model>, Error> {
+) -> Result<Json<realm::Model>, Error> {
     if is_master_realm_admin(&user) {
         let realm = insert_realm(&state.db, payload.name).await?;
         Ok(Json(realm))
@@ -65,7 +65,7 @@ pub async fn update_realm(
     Extension(state): Extension<Arc<AppState>>,
     Path(realm_id): Path<Uuid>,
     Json(payload): Json<UpdateRealmRequest>,
-) -> Result<Json<Model>, Error> {
+) -> Result<Json<realm::Model>, Error> {
     if is_master_realm_admin(&user) {
         let realm = update_realm_by_id(&state.db, realm_id, payload).await?;
         Ok(Json(realm))

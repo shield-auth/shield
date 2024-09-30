@@ -4,25 +4,16 @@ use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize)]
-#[sea_orm(table_name = "user")]
+#[sea_orm(table_name = "client")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    #[sea_orm(column_type = "Text")]
-    pub first_name: String,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub last_name: Option<String>,
-    #[sea_orm(column_type = "Text")]
-    pub email: String,
-    pub email_verified_at: Option<DateTimeWithTimeZone>,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub phone: Option<String>,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub image: Option<String>,
+    pub name: String,
     pub two_factor_enabled_at: Option<DateTimeWithTimeZone>,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub password_hash: Option<String>,
-    pub is_temp_password: Option<bool>,
+    pub max_concurrent_sessions: i32,
+    pub session_lifetime: i32,
+    pub refresh_token_lifetime: i32,
+    pub refresh_token_reuse_limit: i32,
     pub locked_at: Option<DateTimeWithTimeZone>,
     pub realm_id: Uuid,
     pub created_at: DateTimeWithTimeZone,
@@ -31,10 +22,6 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::account::Entity")]
-    Account,
-    #[sea_orm(has_many = "super::authenticator::Entity")]
-    Authenticator,
     #[sea_orm(
         belongs_to = "super::realm::Entity",
         from = "Column::RealmId",
@@ -47,18 +34,6 @@ pub enum Relation {
     ResourceGroup,
     #[sea_orm(has_many = "super::session::Entity")]
     Session,
-}
-
-impl Related<super::account::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Account.def()
-    }
-}
-
-impl Related<super::authenticator::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Authenticator.def()
-    }
 }
 
 impl Related<super::realm::Entity> for Entity {
@@ -78,5 +53,3 @@ impl Related<super::session::Entity> for Entity {
         Relation::Session.def()
     }
 }
-
-impl ActiveModelBehavior for ActiveModel {}

@@ -1,20 +1,12 @@
 use std::sync::Arc;
 
-use crate::database::prelude::{Resource, ResourceGroup, User};
-use crate::database::{
-    resource,
-    resource::{ActiveModel as ResourceActiveModel, Model as ResourceModel},
-    resource_group,
-    resource_group::{ActiveModel as ResourceGroupActiveModel, Model as ResourceGroupModel},
-    user,
-    user::Model as UserModel,
-};
 use crate::mappers::user::{AddResourceRequest, UpdateResourceGroupRequest, UpdateResourceRequest};
 use crate::mappers::DeleteResponse;
 use crate::utils::default_resource_checker::{is_default_resource, is_default_resource_group, is_default_user};
 use axum::extract::Path;
 use axum::{Extension, Json};
 use chrono::Utc;
+use entity::{resource, resource_group, user};
 use futures::future::try_join_all;
 use sea_orm::prelude::Uuid;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
@@ -32,9 +24,9 @@ pub async fn get_users(
     user: TokenUser,
     Extension(state): Extension<Arc<AppState>>,
     Path(realm_id): Path<Uuid>,
-) -> Result<Json<Vec<UserModel>>, Error> {
+) -> Result<Json<Vec<user::Model>>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
-        let users = User::find().filter(user::Column::RealmId.eq(realm_id)).all(&state.db).await?;
+        let users = user::Entity::find().filter(user::Column::RealmId.eq(realm_id)).all(&state.db).await?;
         if users.is_empty() {
             return Err(Error::not_found());
         }
@@ -48,9 +40,9 @@ pub async fn get_user(
     user: TokenUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
-) -> Result<Json<UserModel>, Error> {
+) -> Result<Json<user::Model>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
-        let user = User::find_by_id(user_id).one(&state.db).await?;
+        let user = user::Entity::find_by_id(user_id).one(&state.db).await?;
         match user {
             Some(user) => Ok(Json(user)),
             None => return Err(Error::Authenticate(AuthenticateError::NoResource)),
@@ -73,7 +65,7 @@ pub async fn delete_user(
             return Err(Error::cannot_perform_operation("Cannot delete the current user"));
         }
 
-        let result = User::delete_by_id(user_id).exec(&state.db).await?;
+        let result = user::Entity::delete_by_id(user_id).exec(&state.db).await?;
         Ok(Json(DeleteResponse {
             ok: result.rows_affected == 1,
         }))
@@ -86,9 +78,9 @@ pub async fn get_resource_groups(
     user: TokenUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
-) -> Result<Json<Vec<ResourceGroupModel>>, Error> {
+) -> Result<Json<Vec<resource_group::Model>>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
-        let resource_groups = ResourceGroup::find()
+        let resource_groups = resource_group::Entity::find()
             .filter(resource_group::Column::RealmId.eq(realm_id))
             .filter(resource_group::Column::UserId.eq(user_id))
             .all(&state.db)
@@ -103,9 +95,9 @@ pub async fn get_resource_group(
     user: TokenUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _, resource_group_id)): Path<(Uuid, Uuid, Uuid)>,
-) -> Result<Json<ResourceGroupModel>, Error> {
+) -> Result<Json<resource_group::Model>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
-        let resource_group = ResourceGroup::find_by_id(resource_group_id).one(&state.db).await?;
+        let resource_group = resource_group::Entity::find_by_id(resource_group_id).one(&state.db).await?;
         match resource_group {
             Some(resource_group) => Ok(Json(resource_group)),
             None => return Err(Error::not_found()),
@@ -120,13 +112,13 @@ pub async fn update_resource_group(
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _, resource_group_id)): Path<(Uuid, Uuid, Uuid)>,
     Json(payload): Json<UpdateResourceGroupRequest>,
-) -> Result<Json<ResourceGroupModel>, Error> {
+) -> Result<Json<resource_group::Model>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
         if is_default_resource_group(resource_group_id) {
             return Err(Error::cannot_perform_operation("Cannot update the default resource group"));
         }
 
-        let resource_group = ResourceGroup::find_by_id(resource_group_id).one(&state.db).await?;
+        let resource_group = resource_group::Entity::find_by_id(resource_group_id).one(&state.db).await?;
         if resource_group.is_none() {
             return Err(Error::not_found());
         }
@@ -138,17 +130,17 @@ pub async fn update_resource_group(
         };
         let is_default = match payload.is_default {
             Some(true) => Some(true),
-            _ => resource_group.as_ref().unwrap().is_default,
+            _ => Some(resource_group.as_ref().unwrap().is_default),
         };
 
-        let resource_group = ResourceGroupActiveModel {
+        let resource_group = resource_group::ActiveModel {
             id: Set(resource_group_id),
             realm_id: Set(resource_group.as_ref().unwrap().realm_id),
             client_id: Set(resource_group.as_ref().unwrap().client_id),
             user_id: Set(resource_group.as_ref().unwrap().user_id),
             name: Set(payload.name),
             description: Set(payload.description),
-            is_default: Set(is_default),
+            is_default: Set(is_default.unwrap()),
             locked_at: Set(locked_at),
             ..Default::default()
         };
@@ -169,12 +161,12 @@ pub async fn delete_resource_group(
             return Err(Error::cannot_perform_operation("Cannot delete the default resource group"));
         }
 
-        let resource_group = ResourceGroup::find_by_id(resource_group_id).one(&state.db).await?;
+        let resource_group = resource_group::Entity::find_by_id(resource_group_id).one(&state.db).await?;
         if resource_group.is_none() {
             return Err(Error::not_found());
         }
 
-        let result = ResourceGroup::delete_by_id(resource_group_id).exec(&state.db).await?;
+        let result = resource_group::Entity::delete_by_id(resource_group_id).exec(&state.db).await?;
         Ok(Json(DeleteResponse {
             ok: result.rows_affected == 1,
         }))
@@ -187,9 +179,9 @@ pub async fn get_resources(
     user: TokenUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
-) -> Result<Json<Vec<ResourceModel>>, Error> {
+) -> Result<Json<Vec<resource::Model>>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
-        let resource_groups = ResourceGroup::find()
+        let resource_groups = resource_group::Entity::find()
             .filter(resource_group::Column::RealmId.eq(realm_id))
             .filter(resource_group::Column::UserId.eq(user_id))
             .all(&state.db)
@@ -199,7 +191,7 @@ pub async fn get_resources(
         for resource_group in resource_groups {
             resource_group_ids.push(resource_group.id);
         }
-        let resources = Resource::find()
+        let resources = resource::Entity::find()
             .filter(resource::Column::GroupId.is_in(resource_group_ids))
             .all(&state.db)
             .await?;
@@ -214,7 +206,7 @@ pub async fn add_resources(
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<AddResourceRequest>,
-) -> Result<Json<Vec<ResourceModel>>, Error> {
+) -> Result<Json<Vec<resource::Model>>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
         if payload.group_id.is_some() {
             let futures: Vec<_> = payload
@@ -222,6 +214,7 @@ pub async fn add_resources(
                 .iter()
                 .map(|(name, value)| {
                     let resource = resource::ActiveModel {
+                        id: Set(Uuid::now_v7()),
                         group_id: Set(payload.group_id.unwrap()),
                         name: Set(name.to_string()),
                         value: Set(value.to_string()),
@@ -233,7 +226,7 @@ pub async fn add_resources(
             let resources = try_join_all(futures).await?;
             Ok(Json(resources))
         } else if payload.group_name.is_some() {
-            let resource_groups = ResourceGroup::find()
+            let resource_groups = resource_group::Entity::find()
                 .filter(resource_group::Column::RealmId.eq(realm_id))
                 .filter(resource_group::Column::UserId.eq(user_id))
                 .filter(resource_group::Column::Name.eq(payload.group_name))
@@ -249,6 +242,7 @@ pub async fn add_resources(
                 .iter()
                 .map(|(name, value)| {
                     let resource = resource::ActiveModel {
+                        id: Set(Uuid::now_v7()),
                         group_id: Set(resource_group.id),
                         name: Set(name.to_string()),
                         value: Set(value.to_string()),
@@ -272,13 +266,13 @@ pub async fn update_resource(
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _, resource_id)): Path<(Uuid, Uuid, Uuid)>,
     Json(payload): Json<UpdateResourceRequest>,
-) -> Result<Json<ResourceModel>, Error> {
+) -> Result<Json<resource::Model>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
         if is_default_resource(resource_id) {
             return Err(Error::cannot_perform_operation("Cannot update the default resource"));
         }
 
-        let resource = Resource::find_by_id(resource_id).one(&state.db).await?;
+        let resource = resource::Entity::find_by_id(resource_id).one(&state.db).await?;
         if resource.is_none() {
             return Err(Error::not_found());
         }
@@ -288,7 +282,7 @@ pub async fn update_resource(
             Some(false) => None,
             None => None,
         };
-        let resource = ResourceActiveModel {
+        let resource = resource::ActiveModel {
             id: Set(resource_id),
             group_id: Set(resource.unwrap().group_id),
             name: Set(payload.name),
@@ -314,12 +308,12 @@ pub async fn delete_resource(
             return Err(Error::cannot_perform_operation("Cannot delete the default resource"));
         }
 
-        let resource = Resource::find_by_id(resource_id).one(&state.db).await?;
+        let resource = resource::Entity::find_by_id(resource_id).one(&state.db).await?;
         if resource.is_none() {
             return Err(Error::not_found());
         }
 
-        let result = Resource::delete_by_id(resource_id).exec(&state.db).await?;
+        let result = resource::Entity::delete_by_id(resource_id).exec(&state.db).await?;
         Ok(Json(DeleteResponse {
             ok: result.rows_affected == 1,
         }))

@@ -2,32 +2,30 @@ use chrono::Utc;
 use sea_orm::{prelude::Uuid, ActiveModelTrait, DatabaseConnection, DeleteResult, EntityTrait, Set};
 
 use crate::{
-    database::{
-        prelude::Realm,
-        realm::{ActiveModel, Model},
-    },
     mappers::realm::UpdateRealmRequest,
     packages::errors::{AuthenticateError, Error},
     utils::default_resource_checker::is_default_realm,
 };
+use entity::realm;
 
-pub async fn get_all_realms(db: &DatabaseConnection) -> Result<Vec<Model>, Error> {
-    Ok(Realm::find().all(db).await?)
+pub async fn get_all_realms(db: &DatabaseConnection) -> Result<Vec<realm::Model>, Error> {
+    Ok(realm::Entity::find().all(db).await?)
 }
 
-pub async fn get_realm_by_id(db: &DatabaseConnection, id: Uuid) -> Result<Option<Model>, Error> {
-    Ok(Realm::find_by_id(id).one(db).await?)
+pub async fn get_realm_by_id(db: &DatabaseConnection, id: Uuid) -> Result<Option<realm::Model>, Error> {
+    Ok(realm::Entity::find_by_id(id).one(db).await?)
 }
 
-pub async fn insert_realm(db: &DatabaseConnection, name: String) -> Result<Model, Error> {
-    let realm = ActiveModel {
+pub async fn insert_realm(db: &DatabaseConnection, name: String) -> Result<realm::Model, Error> {
+    let realm = realm::ActiveModel {
+        id: Set(Uuid::now_v7()),
         name: Set(name),
         ..Default::default()
     };
     Ok(realm.insert(db).await?)
 }
 
-pub async fn update_realm_by_id(db: &DatabaseConnection, id: Uuid, payload: UpdateRealmRequest) -> Result<Model, Error> {
+pub async fn update_realm_by_id(db: &DatabaseConnection, id: Uuid, payload: UpdateRealmRequest) -> Result<realm::Model, Error> {
     if is_default_realm(id) && payload.lock == Some(true) {
         return Err(Error::cannot_perform_operation("Cannot lock the default realm"));
     }
@@ -41,7 +39,7 @@ pub async fn update_realm_by_id(db: &DatabaseConnection, id: Uuid, payload: Upda
                 None => realm.locked_at,
             };
 
-            let updated_realm = ActiveModel {
+            let updated_realm = realm::ActiveModel {
                 id: Set(realm.id),
                 name: Set(payload.name),
                 max_concurrent_sessions: Set(payload.max_concurrent_sessions),
@@ -70,5 +68,5 @@ pub async fn update_realm_by_id(db: &DatabaseConnection, id: Uuid, payload: Upda
 }
 
 pub async fn delete_realm_by_id(db: &DatabaseConnection, id: Uuid) -> Result<DeleteResult, Error> {
-    Ok(Realm::delete_by_id(id).exec(db).await?)
+    Ok(realm::Entity::delete_by_id(id).exec(db).await?)
 }
