@@ -3,6 +3,9 @@
 </p>
 <br>
 <p align="center">
+  <a href="https://shield.rs">
+    <img alt="language" src="https://img.shields.io/badge/https%3A%2F%2F-shield.rs-cyan">
+  </a>
   <a href="https://github.com/AutomationTank/shield/search?l=rust">
     <img alt="language" src="https://img.shields.io/badge/language-Rust-orange.svg">
   </a>
