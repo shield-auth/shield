@@ -4,7 +4,7 @@ server:
   domain: localhost
   host: http://localhost:5555
 database:
-  uri: "postgres://postgres:1234@localhost:5432/shield"
+  uri: "postgres://postgres:1234@localhost:5432"
   name: shield
 secrets:
   signing_key: secret

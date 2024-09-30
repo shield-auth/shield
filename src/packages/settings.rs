@@ -13,7 +13,7 @@ pub static SETTINGS: Lazy<Arc<RwLock<Settings>>> = Lazy::new(|| Arc::new(RwLock:
 #[derive(Debug, Clone, Deserialize)]
 pub struct Server {
     pub port: u16,
-    pub domain: String,
+    // pub domain: String,
     pub host: String,
 }
 
@@ -25,7 +25,7 @@ pub struct Logger {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Database {
     pub uri: String,
-    // pub name: String,
+    pub name: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -75,6 +75,9 @@ impl Settings {
         if let Ok(database_uri) = env::var("DATABASE_URL") {
             builder = builder.set_override("database.uri", database_uri)?;
         }
+        if let Ok(database_name) = env::var("DATABASE_NAME") {
+            builder = builder.set_override("database.name", database_name)?;
+        }
         if let Ok(admin_email) = env::var("ADMIN_USERNAME") {
             builder = builder.set_override("admin.email", admin_email)?;
         }
@@ -82,7 +85,7 @@ impl Settings {
             builder = builder.set_override("admin.password", admin_password)?;
         }
 
-        // "./logs/default_cred.txt" exists then read it else skip
+        // "./logs/default_cred.json" exists then read it else skip
         if Path::new("./logs/default_cred.json").exists() {
             let default_cred = DefaultCred::from_file().expect("Failed to read credentials");
             builder = builder.set_override("default_cred.realm_id", default_cred.realm_id.to_string())?;
