@@ -1,9 +1,5 @@
-use crate::{
-    database::{resource, resource_group, user},
-    mappers::auth::CreateUserRequest,
-    packages::errors::Error,
-    utils::hash::generate_password_hash,
-};
+use crate::{mappers::auth::CreateUserRequest, packages::errors::Error, utils::hash::generate_password_hash};
+use entity::{resource, resource_group, user};
 use futures::future::join_all;
 use sea_orm::{prelude::Uuid, ActiveModelTrait, DatabaseConnection, Set};
 

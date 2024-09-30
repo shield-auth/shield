@@ -1,6 +1,6 @@
-use crate::database::user::Model;
+use crate::models::user;
 
-impl Model {
+impl user::Model {
     pub fn verify_password(&self, password: &str) -> bool {
         match self.password_hash {
             Some(ref hash) => bcrypt::verify(password, hash).unwrap_or(false),
