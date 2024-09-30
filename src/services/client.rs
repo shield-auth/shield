@@ -41,9 +41,13 @@ pub async fn update_client_by_id(db: &DatabaseConnection, client_id: Uuid, paylo
 
             let updated_client = client::ActiveModel {
                 id: Set(client.id),
-                name: Set(payload.name),
+                realm_id: Set(client.realm_id),
+                name: Set(match payload.name {
+                    Some(name) => name,
+                    None => client.name,
+                }),
                 max_concurrent_sessions: Set(match payload.max_concurrent_sessions {
-                    Some(max_concurrent_sessions) => Some(max_concurrent_sessions),
+                    Some(max_concurrent_sessions) => max_concurrent_sessions,
                     None => client.max_concurrent_sessions,
                 }),
                 session_lifetime: Set(match payload.session_lifetime {

@@ -9,7 +9,7 @@ pub struct CreateClientRequest {
 
 #[derive(Deserialize)]
 pub struct UpdateClientRequest {
-    pub name: String,
+    pub name: Option<String>,
     pub lock: Option<bool>,
     pub max_concurrent_sessions: Option<i32>,
     pub session_lifetime: Option<i32>,       // in seconds

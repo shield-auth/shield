@@ -38,8 +38,11 @@ impl ActiveModelBehavior for client::ActiveModel {
                 .unwrap_or(0);
 
             // Add the new/updated client's max_concurrent_sessions to the total
-            if let Some(client_max_sessions) = self.max_concurrent_sessions.as_ref() {
-                total_sessions += client_max_sessions;
+            match self.max_concurrent_sessions {
+                ActiveValue::Set(max_concurrent_sessions) => {
+                    total_sessions += max_concurrent_sessions;
+                }
+                _ => {}
             }
 
             // Check if total exceeds the realm's max_concurrent_sessions

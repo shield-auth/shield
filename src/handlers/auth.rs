@@ -93,7 +93,7 @@ pub async fn login(
         .count(&state.db)
         .await?;
 
-    if sessions >= client.max_concurrent_sessions.unwrap() as u64 {
+    if sessions >= client.max_concurrent_sessions as u64 {
         debug!("Client has reached max concurrent sessions");
         return Err(Error::Authenticate(AuthenticateError::MaxConcurrentSessions));
     }
@@ -110,7 +110,8 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
-    let session = session::ActiveModel {
+    let session_model = session::ActiveModel {
+        id: Set(Uuid::now_v7()),
         user_id: Set(user.id),
         client_id: Set(client.id),
         ip_address: Set(session_info.ip_address.to_string()),
@@ -123,7 +124,7 @@ pub async fn login(
         expires: Set((Utc::now() + chrono::Duration::seconds(client.session_lifetime as i64)).into()),
         ..Default::default()
     };
-    let session = session.insert(&state.db).await?;
+    let session = session_model.insert(&state.db).await?;
 
     let access_token = create(
         user.clone(),

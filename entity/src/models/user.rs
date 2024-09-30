@@ -37,7 +37,7 @@ pub enum Relation {
     Realm,
     #[sea_orm(has_one = "super::resource_group::Entity")]
     ResourceGroup,
-    #[sea_orm(has_one = "super::session::Entity")]
+    #[sea_orm(has_many = "super::session::Entity")]
     Session,
 }
 

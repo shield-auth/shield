@@ -11,7 +11,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub name: String,
     pub two_factor_enabled_at: Option<DateTimeWithTimeZone>,
-    pub max_concurrent_sessions: Option<i32>,
+    pub max_concurrent_sessions: i32,
     pub session_lifetime: i32,
     pub refresh_token_lifetime: i32,
     pub refresh_token_reuse_limit: i32,
@@ -34,7 +34,7 @@ pub enum Relation {
     Realm,
     #[sea_orm(has_one = "super::resource_group::Entity")]
     ResourceGroup,
-    #[sea_orm(has_one = "super::session::Entity")]
+    #[sea_orm(has_many = "super::session::Entity")]
     Session,
 }
 

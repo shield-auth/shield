@@ -15,7 +15,7 @@ impl MigrationTrait for Migration {
                     .table(Session::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(Session::Id).uuid().not_null().primary_key().default(Uuid::now_v7()))
-                    .col(ColumnDef::new(Session::ClientId).uuid().not_null().unique_key())
+                    .col(ColumnDef::new(Session::ClientId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_session_client_id")
@@ -23,7 +23,7 @@ impl MigrationTrait for Migration {
                             .to(Client::Table, Client::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
-                    .col(ColumnDef::new(Session::UserId).uuid().not_null().unique_key())
+                    .col(ColumnDef::new(Session::UserId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_session_user_id")
