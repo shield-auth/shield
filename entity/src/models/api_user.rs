@@ -20,6 +20,7 @@ pub struct Model {
     pub created_by: Uuid,
     pub updated_by: Uuid,
     pub expires: DateTimeWithTimeZone,
+    pub locked_at: Option<DateTimeWithTimeZone>,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
 }
@@ -71,5 +72,3 @@ impl Related<super::realm::Entity> for Entity {
         Relation::Realm.def()
     }
 }
-
-impl ActiveModelBehavior for ActiveModel {}

@@ -58,6 +58,7 @@ impl MigrationTrait for Migration {
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(ApiUser::Expires).timestamp_with_time_zone().not_null())
+                    .col(ColumnDef::new(ApiUser::LockedAt).timestamp_with_time_zone())
                     .col(
                         ColumnDef::new(ApiUser::CreatedAt)
                             .timestamp_with_time_zone()
@@ -122,6 +123,7 @@ pub enum ApiUser {
     Role,
     Access,
     Expires,
+    LockedAt,
     CreatedBy,
     UpdatedBy,
     CreatedAt,

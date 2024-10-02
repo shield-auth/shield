@@ -18,8 +18,6 @@ where
         let state = parts.extensions.get::<Arc<AppState>>().expect("AppState not found");
 
         if let Some(api_key) = parts.headers.get("Api-Key").and_then(|v| v.to_str().ok()) {
-            // Validate Api Key
-            println!("🚀 Api Key: {}", api_key);
             return ApiTokenUser::validate_cred(&state.db, api_key).await;
         }
 

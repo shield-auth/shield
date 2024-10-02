@@ -9,7 +9,6 @@ pub fn create_routes() -> Router {
 }
 
 async fn get_health(user: ApiTokenUser) -> Result<Json<Health>, Error> {
-    debug!("🚀 Health request received! {:#?}", user);
     debug!("Returning health");
     Ok(Json(Health { ok: true }))
 }
