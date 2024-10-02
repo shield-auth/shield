@@ -124,6 +124,8 @@ pub enum AuthenticateError {
     TokenCreation,
     #[error("Invalid authentication credentials")]
     InvalidToken,
+    #[error("Invalid api credentials")]
+    InvalidApiCredentials,
     #[error("Inappropriate resource access")]
     NoResource,
     #[error("Email not verified")]
@@ -144,11 +146,12 @@ impl AuthenticateError {
             AuthenticateError::NoResource => (StatusCode::FORBIDDEN, 40008),
             AuthenticateError::ActionForbidden => (StatusCode::FORBIDDEN, 40009),
             AuthenticateError::MaxConcurrentSessions => (StatusCode::LOCKED, 40010),
+            AuthenticateError::InvalidApiCredentials => (StatusCode::FORBIDDEN, 40011),
             AuthenticateError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, 5001),
         }
     }
 
-    fn with_context(self, context: &str) -> Self {
+    fn with_context(self, _context: &str) -> Self {
         match self {
             AuthenticateError::WrongCredentials => AuthenticateError::WrongCredentials,
             AuthenticateError::TokenCreation => AuthenticateError::TokenCreation,
@@ -157,6 +160,7 @@ impl AuthenticateError {
             AuthenticateError::EmailNotVerified => AuthenticateError::EmailNotVerified,
             AuthenticateError::ActionForbidden => AuthenticateError::ActionForbidden,
             AuthenticateError::MaxConcurrentSessions => AuthenticateError::MaxConcurrentSessions,
+            AuthenticateError::InvalidApiCredentials => AuthenticateError::InvalidApiCredentials,
             AuthenticateError::Locked => AuthenticateError::Locked,
         }
     }

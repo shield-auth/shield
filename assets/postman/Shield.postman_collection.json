@@ -97,6 +97,136 @@
 					"name": "Client",
 					"item": [
 						{
+							"name": "API User",
+							"item": [
+								{
+									"name": "Create API User",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"name\": \"Portal preprod - 1\",\r\n    \"role\": \"client_admin\",\r\n    \"access\": \"write\",\r\n    \"expires\": \"1h\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}/api-users",
+											"host": [
+												"{{BASE_URL}}"
+											],
+											"path": [
+												"realms",
+												"{{REALM_ID}}",
+												"clients",
+												"{{CLIENT_ID}}",
+												"api-users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update API User",
+									"request": {
+										"method": "PATCH",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    // \"name\": \"Portal preprod - 2\",\r\n    // \"role\": \"client_admin\",\r\n    // \"access\": \"write\",\r\n    // \"expires\": \"1d\",\r\n    \"lock\": false\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}/api-users/01924d07-c09a-72a2-bdf6-dcab4549df73",
+											"host": [
+												"{{BASE_URL}}"
+											],
+											"path": [
+												"realms",
+												"{{REALM_ID}}",
+												"clients",
+												"{{CLIENT_ID}}",
+												"api-users",
+												"01924d07-c09a-72a2-bdf6-dcab4549df73"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get API Users",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}/api-users",
+											"host": [
+												"{{BASE_URL}}"
+											],
+											"path": [
+												"realms",
+												"{{REALM_ID}}",
+												"clients",
+												"{{CLIENT_ID}}",
+												"api-users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete API User",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}/api-users/01924cc8-958a-7223-acfd-a49e7223da71",
+											"host": [
+												"{{BASE_URL}}"
+											],
+											"path": [
+												"realms",
+												"{{REALM_ID}}",
+												"clients",
+												"{{CLIENT_ID}}",
+												"api-users",
+												"01924cc8-958a-7223-acfd-a49e7223da71"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
 							"name": "Get Clients",
 							"request": {
 								"method": "GET",
@@ -912,7 +1042,13 @@
 			"name": "Get Health",
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "Api-Key",
+						"value": "01924d07-c09a-72a2-bdf6-dcab4549df73.B/vqBBCnR8Pt9sM4ZzXqLxU6QLlz7dQDe3i2yMmAwT9o/uXeKxZEYOzO6xCTvzPhHp7ach59GaT9ugrGZ+Bvmg==",
+						"type": "text"
+					}
+				],
 				"url": {
 					"raw": "{{BASE_URL}}/health",
 					"host": [

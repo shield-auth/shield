@@ -1,4 +1,5 @@
 use std::sync::Arc;
+pub mod api_user;
 
 use crate::{
     mappers::{
@@ -8,7 +9,7 @@ use crate::{
     packages::{
         db::AppState,
         errors::{AuthenticateError, Error},
-        token::TokenUser,
+        token_user::TokenUser,
     },
     services::client::{delete_client_by_id, get_all_clients, get_client_by_id, insert_client, update_client_by_id},
     utils::{

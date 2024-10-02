@@ -2668,6 +2668,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "axum-extra",
+ "base64 0.22.1",
  "bcrypt",
  "chrono",
  "config",
@@ -2678,6 +2679,7 @@ dependencies = [
  "migration",
  "once_cell",
  "parking_lot",
+ "rand",
  "sea-orm",
  "sea-orm-migration",
  "serde",
