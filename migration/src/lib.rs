@@ -6,6 +6,7 @@ mod m20220101_000003_create_user_table;
 mod m20220101_000004_create_resource_group_table;
 mod m20220101_000005_create_resource_table;
 mod m20220101_000006_create_session_table;
+mod m20220101_000007_create_api_user_table;
 
 pub struct Migrator;
 
@@ -19,6 +20,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20220101_000004_create_resource_group_table::Migration),
             Box::new(m20220101_000005_create_resource_table::Migration),
             Box::new(m20220101_000006_create_session_table::Migration),
+            Box::new(m20220101_000007_create_api_user_table::Migration),
         ]
     }
 }

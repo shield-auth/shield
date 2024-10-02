@@ -1,8 +1,8 @@
 use crate::packages::errors::AuthenticateError;
 use crate::packages::errors::Error;
 use crate::packages::settings::SETTINGS;
-use crate::packages::token;
-use crate::packages::token::TokenUser;
+use crate::packages::token_user;
+use crate::packages::token_user::TokenUser;
 
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts, RequestPartsExt};
 
@@ -25,7 +25,7 @@ where
             .map_err(|_| AuthenticateError::InvalidToken)?;
 
         let secret = &SETTINGS.read().secrets.signing_key;
-        let token_data = token::decode(bearer.token(), secret).map_err(|_| AuthenticateError::InvalidToken)?;
+        let token_data = token_user::decode(bearer.token(), secret).map_err(|_| AuthenticateError::InvalidToken)?;
 
         Ok(TokenUser::from_claim(token_data.claims))
     }

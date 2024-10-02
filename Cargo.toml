@@ -40,3 +40,5 @@ tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 uaparser = "0.6.4"
 uuid = { version = "1.10.0", features = ["v7"] }
+rand = "0.8.5"
+base64 = "0.22.1"

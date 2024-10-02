@@ -10,7 +10,7 @@ use crate::{
         db::AppState,
         errors::{AuthenticateError, Error},
         settings::SETTINGS,
-        token::{create, decode, TokenUser},
+        token_user::{create, decode, TokenUser},
     },
     services::user::insert_user,
     utils::role_checker::{is_current_realm_admin, is_master_realm_admin},

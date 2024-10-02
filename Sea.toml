@@ -1,2 +1,2 @@
 [generate]
-with_serde = true
+with_serde = "both"

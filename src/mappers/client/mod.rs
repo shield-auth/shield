@@ -1,3 +1,4 @@
+pub mod api_user;
 use sea_orm::prelude::Uuid;
 use serde::Deserialize;
 

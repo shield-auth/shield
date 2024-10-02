@@ -15,7 +15,7 @@ use crate::packages::db::AppState;
 use crate::{
     packages::{
         errors::{AuthenticateError, Error},
-        token::TokenUser,
+        token_user::TokenUser,
     },
     utils::role_checker::{is_current_realm_admin, is_master_realm_admin},
 };
