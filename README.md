@@ -32,5 +32,9 @@
 </p>
 <!-- markdownlint-restore -->
 
-# Shield 🛡️
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/AutomationTank/shield/trunk/assets/images/shield-hero.png" alt="Shield Hero" style="border-radius: 16px;"/>
+</p>
+
 The **Rust** based **Open Source Identity and Access Management** (Inspired by [Keycloak](https://www.keycloak.org))
