@@ -9,6 +9,7 @@ env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
   IMAGE_NAME: "shieldauth/shield"
+  CIRCLECI_TOKEN: ${{ secrets.CIRCLECI_TOKEN }}
 
 jobs:
   build:
@@ -17,19 +18,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Check CircleCI Status
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const circleciCheck = await github.checks.listForRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: context.sha,
-            });
-            const circleciCheckStatus = circleciCheck.data.check_runs.find(run => run.app.name === 'CircleCI');
-            if (!circleciCheckStatus || circleciCheckStatus.conclusion !== 'success') {
-              throw new Error('CircleCI checks did not pass.');
-            }
+      - name: Check CircleCI Build Status
+        run: |
+          # Fetch the latest CircleCI build status using CircleCI API
+          CIRCLECI_STATUS=$(curl -s -u ${CIRCLECI_TOKEN}: \
+            "https://circleci.com/api/v2/project/github/<YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME>/pipeline?branch=trunk" | \
+            jq -r '.items[0].state')
+
+          # Check if the last build was successful
+          if [ "$CIRCLECI_STATUS" != "success" ]; then
+            echo "CircleCI build did not pass. Exiting."
+            exit 1
+          else
+            echo "CircleCI build passed. Proceeding with Docker build and push."
+          fi
 
       - name: Build the project
         run: cargo build --verbose
