@@ -1,32 +1,27 @@
 name: Rust CI/CD
-
 on:
   release:
     types: [created]
-
 env:
   CARGO_TERM_COLOR: always
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
   IMAGE_NAME: "shieldauth/shield"
-  CIRCLECI_TOKEN: ${{ secrets.CIRCLECI_TOKEN }}
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        arch: [x64, arm64]
-
+        arch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Rust and update to the latest stable version
-        run: |
-          rustup update stable
-          rustup default stable
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Determine version from release
         shell: bash
@@ -39,39 +34,44 @@ jobs:
             exit 1
           fi
 
-      - name: Build the project for ${{ matrix.os }} and ${{ matrix.arch }}
-        if: runner.os == 'Linux'
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/${{ matrix.arch }}
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.ref_name }}-${{ matrix.arch }}
+            ${{ env.IMAGE_NAME }}:latest-${{ matrix.arch }}
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-${{ matrix.arch }},mode=max
+
+  create-manifests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Create and push manifest for version tag
         run: |
-          docker run --rm -v "$(pwd)":/app -w /app rust:latest cargo build --release --verbose
+          docker manifest create ${{ env.IMAGE_NAME }}:${{ github.ref_name }} \
+            ${{ env.IMAGE_NAME }}:${{ github.ref_name }}-amd64 \
+            ${{ env.IMAGE_NAME }}:${{ github.ref_name }}-arm64
+          docker manifest push ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
 
-      - name: Run tests for ${{ matrix.os }} and ${{ matrix.arch }}
-        if: runner.os == 'Linux'
+      - name: Create and push manifest for latest tag
         run: |
-          docker run --rm -v "$(pwd)":/app -w /app rust:latest cargo test --verbose
-
-      # Native Rust build for macOS and Windows
-      - name: Build project (non-Linux)
-        if: runner.os != 'Linux'
-        run: cargo build --release --verbose
-
-      - name: Run tests (non-Linux)
-        if: runner.os != 'Linux'
-        run: cargo test --verbose
-
-      - name: Log in to DockerHub
-        if: runner.os == 'Linux'
-        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: Build Docker image (Linux only)
-        if: runner.os == 'Linux'
-        run: |
-          docker buildx build --platform linux/${{ matrix.arch }} \
-            -t "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-${{ github.ref_name }}" .
-
-      - name: Push Docker image to DockerHub (Linux only)
-        if: runner.os == 'Linux'
-        run: |
-          docker tag "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-${{ github.ref_name }}" \
-            "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-latest"
-          docker push "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-${{ github.ref_name }}"
-          docker push "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-latest"
+          docker manifest create ${{ env.IMAGE_NAME }}:latest \
+            ${{ env.IMAGE_NAME }}:latest-amd64 \
+            ${{ env.IMAGE_NAME }}:latest-arm64
+          docker manifest push ${{ env.IMAGE_NAME }}:latest
