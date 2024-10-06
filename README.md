@@ -27,16 +27,17 @@
     <img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/shield_auth">
   </a>
 </p>
-<p align="center" style="display: flex; gap: 10px; width: 100%; justify-content: center;">
-  <a href="https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk" target="_blank" style="display: inline-flex; gap: 0px;">
-    <img src="https://img.shields.io/badge/trunk-gray"alt="CircleCI" style="border-radius-right: 0px;">
-    <img src="https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk.svg?style=svg" alt="CircleCI">
-  </a>
-  <a href="https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop" target="_blank" style="display: inline-flex; gap: 0px;">
-    <img src="https://img.shields.io/badge/develop-gray"alt="CircleCI" style="border-radius-right: 0px;">
-    <img src="https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop.svg?style=svg" alt="CircleCI" style="border-radius-left: 0px;">
-  </a>
-</p>
+
+<div align="center">
+
+| Branch  | Status | Coverage |
+| :- | :-: | :-: |
+| ![trunk](https://img.shields.io/badge/trunk-orange)   |   [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk)   |  [![codecov](https://codecov.io/gh/AutomationTank/shield/branch/trunk/graph/badge.svg?token=1S0S4T1Z1J)](https://codecov.io/gh/AutomationTank/shield)  |
+| ![develop](https://img.shields.io/badge/develop-blue) | [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop) | [![codecov](https://codecov.io/gh/AutomationTank/shield/branch/develop/graph/badge.svg?token=1S0S4T1Z1J)](https://codecov.io/gh/AutomationTank/shield) |
+|         |
+
+</div>
+
 <!-- markdownlint-restore -->
 
 <p align="center">
