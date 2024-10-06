@@ -3,6 +3,8 @@ name: Rust CI/CD
 on:
   push:
     branches: ["trunk"]
+  release:
+    types: [created]
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,23 +17,48 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        arch: [x64, arm64]
+
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build the project
-        run: cargo build --release --verbose
+      - name: Determine version from release
+        run: |
+          if [[ "$GITHUB_REF" =~ ^refs/tags/v([0-9]+.[0-9]+.[0-9]+)$ ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+          else
+            echo "Invalid release tag format. Exiting."
+            exit 1
+          fi
 
-      - name: Run tests
-        run: cargo test --verbose
+      - name: Build the project for ${{ matrix.os }} and ${{ matrix.arch }}
+        run: |
+          docker run --rm -v "$(pwd)":/app -w /app \
+            --platform ${{ matrix.os }}:${{ matrix.arch }} \
+            rust:1.72.0-alpine \
+            cargo build --release --verbose
+
+      - name: Run tests for ${{ matrix.os }} and ${{ matrix.arch }}
+        run: |
+          docker run --rm -v "$(pwd)":/app -w /app \
+            --platform ${{ matrix.os }}:${{ matrix.arch }} \
+            rust:1.72.0-alpine \
+            cargo test --verbose
 
       - name: Log in to DockerHub
         run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Build Docker image
-        run: docker build -t $IMAGE_NAME:${{ github.sha }} .
+      - name: Build Docker image for ${{ matrix.os }} and ${{ matrix.arch }}
+        run: |
+          docker buildx build --platform ${{ matrix.os }}:${{ matrix.arch }} \
+            -t "${{ env.IMAGE_NAME }}:${{ matrix.os }}_${{ matrix.arch }}:${{ github.ref_name }}" .
 
       - name: Push Docker image to DockerHub
         run: |
-          docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:latest
-          docker push $IMAGE_NAME:${{ github.sha }}
-          docker push $IMAGE_NAME:latest
+          docker tag "${{ env.IMAGE_NAME }}:${{ matrix.os }}_${{ matrix.arch }}:${{ github.ref_name }}" \
+            "${{ env.IMAGE_NAME }}:${{ matrix.os }}_${{ matrix.arch }}:latest"
+          docker push "${{ env.IMAGE_NAME }}:${{ matrix.os }}_${{ matrix.arch }}:${{ github.ref_name }}"
+          docker push "${{ env.IMAGE_NAME }}:${{ matrix.os }}_${{ matrix.arch }}:latest"
