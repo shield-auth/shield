@@ -42,12 +42,12 @@ jobs:
       - name: Build the project for ${{ matrix.os }} and ${{ matrix.arch }}
         if: runner.os == 'Linux'
         run: |
-          docker run --rm -v "$(pwd)":/app -w /app rust:latest-alpine cargo build --release --verbose
+          docker run --rm -v "$(pwd)":/app -w /app rust:latest cargo build --release --verbose
 
       - name: Run tests for ${{ matrix.os }} and ${{ matrix.arch }}
         if: runner.os == 'Linux'
         run: |
-          docker run --rm -v "$(pwd)":/app -w /app rust:latest-alpine cargo test --verbose
+          docker run --rm -v "$(pwd)":/app -w /app rust:latest cargo test --verbose
 
       # Native Rust build for macOS and Windows
       - name: Build project (non-Linux)
