@@ -1,22 +1,50 @@
-name: Rust
+name: Rust CI/CD
 
 on:
   push:
-    branches: [ "trunk" ]
-  pull_request:
-    branches: [ "trunk" ]
+    branches: ["trunk"]
 
 env:
   CARGO_TERM_COLOR: always
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+  IMAGE_NAME: "shieldauth/shield"
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v3
+
+      - name: Check CircleCI Status
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const circleciCheck = await github.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+            });
+            const circleciCheckStatus = circleciCheck.data.check_runs.find(run => run.app.name === 'CircleCI');
+            if (!circleciCheckStatus || circleciCheckStatus.conclusion !== 'success') {
+              throw new Error('CircleCI checks did not pass.');
+            }
+
+      - name: Build the project
+        run: cargo build --verbose
+
+      - name: Run tests
+        run: cargo test --verbose
+
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t $IMAGE_NAME:${{ github.sha }} .
+
+      - name: Push Docker image to DockerHub
+        run: |
+          docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${{ github.sha }}
+          docker push $IMAGE_NAME:latest

@@ -27,12 +27,14 @@
     <img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/shield_auth">
   </a>
 </p>
-<p align="center">
-  <a href="https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk">
-    <img src="https://img.shields.io/circleci/build/gh/shield-auth/shield/trunk?label=CircleCi:+trunk" alt="CircleCI">
+<p align="center" style="display: flex; gap: 10px; width: 100%; justify-content: center;">
+  <a href="https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk" target="_blank" style="display: inline-flex; gap: 0px;">
+    <img src="https://img.shields.io/badge/CircleCi:_trunk-gray"alt="CircleCI" style="border-radius-right: 0px;">
+    <img src="https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk.svg?style=svg" alt="CircleCI">
   </a>
-  <a href="https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop">
-    <img src="https://img.shields.io/circleci/build/gh/shield-auth/shield/develop?label=CircleCi:+develop" alt="CircleCI">
+  <a href="https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop" target="_blank" style="display: inline-flex; gap: 0px;">
+    <img src="https://img.shields.io/badge/CircleCi:_develop-gray"alt="CircleCI" style="border-radius-right: 0px;">
+    <img src="https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop.svg?style=svg" alt="CircleCI" style="border-radius-left: 0px;">
   </a>
 </p>
 <!-- markdownlint-restore -->
