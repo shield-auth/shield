@@ -1,19 +1,26 @@
 use chrono::Utc;
-use entity::{client, resource, resource_group, session, user};
+use entity::{
+    client, resource, resource_group,
+    sea_orm_active_enums::{ApiUserAccess, ApiUserRole},
+    session, user,
+};
 use sea_orm::{prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, Set};
 use std::sync::Arc;
 
 use crate::{
-    mappers::auth::{CreateUserRequest, IntrospectRequest, IntrospectResponse, LogoutRequest, LogoutResponse},
+    mappers::auth::{
+        CreateUserRequest, IntrospectRequest, IntrospectResponse, LogoutRequest, LogoutResponse, RefreshTokenRequest, RefreshTokenResponse,
+    },
     middleware::session_info_extractor::SessionInfo,
     packages::{
+        api_token::ApiTokenUser,
         db::AppState,
         errors::{AuthenticateError, Error},
         settings::SETTINGS,
         token_user::{create, decode, TokenUser},
     },
     services::user::insert_user,
-    utils::role_checker::{is_current_realm_admin, is_master_realm_admin},
+    utils::role_checker::{has_access_to_api_cred, is_current_realm_admin, is_master_realm_admin},
 };
 use axum::{extract::Path, Extension, Json};
 use serde::{Deserialize, Serialize};
@@ -345,6 +352,41 @@ pub async fn introspect(
             }
             None => Err(Error::Authenticate(AuthenticateError::NoResource)),
         }
+    } else {
+        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
+    }
+}
+
+pub async fn refresh_token(
+    user: ApiTokenUser,
+    Extension(state): Extension<Arc<AppState>>,
+    Path((_realm_id, client_id)): Path<(Uuid, Uuid)>,
+    Json(payload): Json<RefreshTokenRequest>,
+) -> Result<Json<RefreshTokenResponse>, Error> {
+    if has_access_to_api_cred(&user, ApiUserRole::ClientAdmin, ApiUserAccess::Admin).await {
+        let token_data = decode(&payload.refresh_token, &SETTINGS.read().secrets.signing_key).expect("Failed to decode token");
+
+        if token_data.claims.resource.is_none() || token_data.claims.resource.is_some() && token_data.claims.resource.unwrap().client_id != client_id
+        {
+            return Err(Error::Authenticate(AuthenticateError::ActionForbidden));
+        }
+
+        let session = session::Entity::find_by_id(token_data.claims.sid).one(&state.db).await?;
+        if session.is_none() {
+            return Err(Error::Authenticate(AuthenticateError::InvalidToken));
+        }
+
+        let session = session.unwrap();
+        if session.expires.timestamp() <= chrono::Local::now().timestamp() {
+            return Err(Error::Authenticate(AuthenticateError::InvalidToken));
+        }
+
+        Ok(Json(RefreshTokenResponse {
+            // TODO: Create set of access and refresh tokens depending upon refresh_token_reuse_limit
+            access_token: token_data.claims.sub.to_string(),
+            refresh_token: token_data.claims.sub.to_string(),
+            expires_in: token_data.claims.exp - chrono::Local::now().timestamp() as usize,
+        }))
     } else {
         Err(Error::Authenticate(AuthenticateError::ActionForbidden))
     }

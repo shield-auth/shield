@@ -19,6 +19,7 @@ pub struct Model {
     pub locked_at: Option<DateTimeWithTimeZone>,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
+    pub use_refresh_token: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

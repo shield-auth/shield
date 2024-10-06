@@ -18,6 +18,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Client::TwoFactorEnabledAt).timestamp_with_time_zone())
                     .col(ColumnDef::new(Client::MaxConcurrentSessions).integer().not_null().default(1))
                     .col(ColumnDef::new(Client::SessionLifetime).integer().not_null().default(300))
+                    .col(ColumnDef::new(Client::UseRefreshToken).boolean().not_null().default(true))
                     .col(ColumnDef::new(Client::RefreshTokenLifetime).integer().not_null().default(3600))
                     .col(ColumnDef::new(Client::RefreshTokenReuseLimit).integer().not_null().default(0))
                     .col(ColumnDef::new(Client::LockedAt).timestamp_with_time_zone())
@@ -60,6 +61,7 @@ pub enum Client {
     TwoFactorEnabledAt,
     MaxConcurrentSessions,
     SessionLifetime,
+    UseRefreshToken,
     RefreshTokenLifetime,
     RefreshTokenReuseLimit,
     LockedAt,

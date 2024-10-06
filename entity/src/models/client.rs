@@ -18,6 +18,7 @@ pub struct Model {
     pub realm_id: Uuid,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
+    pub use_refresh_token: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
