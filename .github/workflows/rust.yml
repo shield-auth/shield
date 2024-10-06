@@ -66,12 +66,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           docker buildx build --platform linux/${{ matrix.arch }} \
-            -t "${{ env.IMAGE_NAME }}:linux_${{ matrix.arch }}:${{ github.ref_name }}" .
+            -t "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-${{ github.ref_name }}" .
 
       - name: Push Docker image to DockerHub (Linux only)
         if: runner.os == 'Linux'
         run: |
-          docker tag "${{ env.IMAGE_NAME }}:linux_${{ matrix.arch }}:${{ github.ref_name }}" \
-            "${{ env.IMAGE_NAME }}:linux_${{ matrix.arch }}:latest"
-          docker push "${{ env.IMAGE_NAME }}:linux_${{ matrix.arch }}:${{ github.ref_name }}"
-          docker push "${{ env.IMAGE_NAME }}:linux_${{ matrix.arch }}:latest"
+          docker tag "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-${{ github.ref_name }}" \
+            "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-latest"
+          docker push "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-${{ github.ref_name }}"
+          docker push "${{ env.IMAGE_NAME }}:linux-${{ matrix.arch }}-latest"
