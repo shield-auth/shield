@@ -2,13 +2,13 @@ use axum::{routing::get, Json, Router};
 use serde::Serialize;
 use tracing::debug;
 
-use crate::packages::{api_token::ApiTokenUser, errors::Error};
+use crate::packages::errors::Error;
 
 pub fn create_routes() -> Router {
     Router::new().route("/", get(get_health))
 }
 
-async fn get_health(user: ApiTokenUser) -> Result<Json<Health>, Error> {
+async fn get_health() -> Result<Json<Health>, Error> {
     debug!("Returning health");
     Ok(Json(Health { ok: true }))
 }

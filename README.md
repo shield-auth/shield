@@ -15,9 +15,6 @@
   <a href="https://docs.rs/rust-shield">
     <img alt="crate-docs" src="https://img.shields.io/badge/docs-docs.rs-orange?logo=rust">
   </a>
-  <a href="https://circleci.com/gh/AutomationTank/shield">
-    <img alt="build status" src="https://circleci.com/gh/AutomationTank/shield.svg?style=shield"/>
-  </a>
 </p>
 <p align="center">
   <a href="https://crates.io/crates/rust-shield">
@@ -30,8 +27,15 @@
     <img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/shield_auth">
   </a>
 </p>
+<p align="center">
+  <a href="https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk">
+    <img src="https://img.shields.io/circleci/build/gh/shield-auth/shield/trunk?label=CircleCi:+trunk" alt="CircleCI">
+  </a>
+  <a href="https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop">
+    <img src="https://img.shields.io/circleci/build/gh/shield-auth/shield/develop?label=CircleCi:+develop" alt="CircleCI">
+  </a>
+</p>
 <!-- markdownlint-restore -->
-
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/AutomationTank/shield/trunk/assets/images/shield-hero.png" alt="Shield Hero" style="border-radius: 16px;"/>

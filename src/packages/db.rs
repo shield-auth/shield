@@ -11,8 +11,8 @@ pub struct AppState {
 }
 
 pub async fn get_db_connection_pool() -> Result<AppState, DbErr> {
-    let uri = &SETTINGS.read().database.uri;
-    let db_name = &SETTINGS.read().database.name;
+    let uri = SETTINGS.read().database.uri.clone();
+    let db_name = SETTINGS.read().database.name.clone();
     let connection_string = format!("{}/{}", uri, db_name);
 
     let mut opts = ConnectOptions::new(&connection_string);

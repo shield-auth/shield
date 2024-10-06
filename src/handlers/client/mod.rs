@@ -46,7 +46,7 @@ pub async fn get_client(
         let client = get_client_by_id(&state.db, client_id).await?;
         match client {
             Some(client) => Ok(Json(client)),
-            None => return Err(Error::Authenticate(AuthenticateError::NoResource)),
+            None => Err(Error::Authenticate(AuthenticateError::NoResource)),
         }
     } else {
         Err(Error::Authenticate(AuthenticateError::ActionForbidden))

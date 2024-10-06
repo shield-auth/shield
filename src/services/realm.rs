@@ -61,9 +61,7 @@ pub async fn update_realm_by_id(db: &DatabaseConnection, id: Uuid, payload: Upda
             let updated_realm = updated_realm.update(db).await?;
             Ok(updated_realm)
         }
-        None => {
-            return Err(Error::Authenticate(AuthenticateError::NoResource));
-        }
+        None => Err(Error::Authenticate(AuthenticateError::NoResource)),
     }
 }
 

@@ -69,9 +69,7 @@ pub async fn update_client_by_id(db: &DatabaseConnection, client_id: Uuid, paylo
             let updated_client = updated_client.update(db).await?;
             Ok(updated_client)
         }
-        None => {
-            return Err(Error::Authenticate(AuthenticateError::NoResource));
-        }
+        None => Err(Error::Authenticate(AuthenticateError::NoResource)),
     }
 }
 
