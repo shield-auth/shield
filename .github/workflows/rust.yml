@@ -1,8 +1,6 @@
 name: Rust CI/CD
 
 on:
-  push:
-    branches: ["trunk"]
   release:
     types: [created]
 
