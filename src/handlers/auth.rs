@@ -153,7 +153,7 @@ pub async fn register(
         let user = insert_user(&state.db, realm_id, client_id, payload).await?;
         Ok(Json(user))
     } else {
-        return Err(Error::Authenticate(AuthenticateError::ActionForbidden));
+        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
     }
 }
 

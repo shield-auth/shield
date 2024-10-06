@@ -38,11 +38,8 @@ impl ActiveModelBehavior for client::ActiveModel {
                 .unwrap_or(0);
 
             // Add the new/updated client's max_concurrent_sessions to the total
-            match self.max_concurrent_sessions {
-                ActiveValue::Set(max_concurrent_sessions) => {
-                    total_sessions += max_concurrent_sessions;
-                }
-                _ => {}
+            if let ActiveValue::Set(max_concurrent_sessions) = self.max_concurrent_sessions {
+                total_sessions += max_concurrent_sessions;
             }
 
             // Check if total exceeds the realm's max_concurrent_sessions
@@ -55,45 +52,36 @@ impl ActiveModelBehavior for client::ActiveModel {
         }
 
         // Check session_lifetime
-        match self.session_lifetime {
-            ActiveValue::Set(session_lifetime) => {
-                if session_lifetime > realm.session_lifetime {
-                    return Err(DbErr::Custom(format!(
-                        "Client session_lifetime ({}) exceeds the realm's limit ({})",
-                        self.session_lifetime.as_ref(),
-                        &realm.session_lifetime
-                    )));
-                }
+        if let ActiveValue::Set(session_lifetime) = self.session_lifetime {
+            if session_lifetime > realm.session_lifetime {
+                return Err(DbErr::Custom(format!(
+                    "Client session_lifetime ({}) exceeds the realm's limit ({})",
+                    self.session_lifetime.as_ref(),
+                    &realm.session_lifetime
+                )));
             }
-            _ => {}
         }
 
         // // Check refresh_token_lifetime
-        match self.refresh_token_lifetime {
-            ActiveValue::Set(refresh_token_lifetime) => {
-                if refresh_token_lifetime > realm.refresh_token_lifetime {
-                    return Err(DbErr::Custom(format!(
-                        "Client refresh_token_lifetime ({}) exceeds the realm's limit ({})",
-                        self.refresh_token_lifetime.as_ref(),
-                        &realm.refresh_token_lifetime
-                    )));
-                }
+        if let ActiveValue::Set(refresh_token_lifetime) = self.refresh_token_lifetime {
+            if refresh_token_lifetime > realm.refresh_token_lifetime {
+                return Err(DbErr::Custom(format!(
+                    "Client refresh_token_lifetime ({}) exceeds the realm's limit ({})",
+                    self.refresh_token_lifetime.as_ref(),
+                    &realm.refresh_token_lifetime
+                )));
             }
-            _ => {}
         }
 
         // // Check refresh_token_reuse_limit
-        match self.refresh_token_reuse_limit {
-            ActiveValue::Set(refresh_token_reuse_limit) => {
-                if refresh_token_reuse_limit > realm.refresh_token_reuse_limit {
-                    return Err(DbErr::Custom(format!(
-                        "Client refresh_token_reuse_limit ({}) exceeds the realm's limit ({})",
-                        self.refresh_token_reuse_limit.as_ref(),
-                        &realm.refresh_token_reuse_limit
-                    )));
-                }
+        if let ActiveValue::Set(refresh_token_reuse_limit) = self.refresh_token_reuse_limit {
+            if refresh_token_reuse_limit > realm.refresh_token_reuse_limit {
+                return Err(DbErr::Custom(format!(
+                    "Client refresh_token_reuse_limit ({}) exceeds the realm's limit ({})",
+                    self.refresh_token_reuse_limit.as_ref(),
+                    &realm.refresh_token_reuse_limit
+                )));
             }
-            _ => {}
         }
 
         Ok(self)

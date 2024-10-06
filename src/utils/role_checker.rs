@@ -1,7 +1,6 @@
-use entity::sea_orm_active_enums::{ApiUserAccess, ApiUserRole};
-use sea_orm::{prelude::Uuid, DatabaseConnection};
+use sea_orm::prelude::Uuid;
 
-use crate::packages::{api_token::ApiTokenUser, token_user::TokenUser};
+use crate::packages::token_user::TokenUser;
 
 use super::default_resource_checker::is_default_realm;
 
@@ -30,12 +29,12 @@ pub fn is_current_realm_admin(user: &TokenUser, realm_id: &str) -> bool {
     })
 }
 
-pub async fn has_access_to_api_cred(db: &DatabaseConnection, api_key: &str, role: ApiUserRole, access: ApiUserAccess) -> bool {
-    let api_user = ApiTokenUser::validate_cred(db, api_key).await.unwrap();
+// pub async fn has_access_to_api_cred(db: &DatabaseConnection, api_key: &str, role: ApiUserRole, access: ApiUserAccess) -> bool {
+//     let api_user = ApiTokenUser::validate_cred(db, api_key).await.unwrap();
 
-    if api_user.role != role {
-        return false;
-    }
+//     if api_user.role != role {
+//         return false;
+//     }
 
-    api_user.access.has_access(access)
-}
+//     api_user.access.has_access(access)
+// }

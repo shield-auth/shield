@@ -30,7 +30,7 @@ pub async fn get_realms(user: TokenUser, Extension(state): Extension<Arc<AppStat
         return Ok(Json(realms));
     }
 
-    return Err(Error::Authenticate(AuthenticateError::NoResource));
+    Err(Error::Authenticate(AuthenticateError::NoResource))
 }
 
 pub async fn get_realm(user: TokenUser, Extension(state): Extension<Arc<AppState>>, Path(realm_id): Path<Uuid>) -> Result<Json<realm::Model>, Error> {
@@ -38,12 +38,10 @@ pub async fn get_realm(user: TokenUser, Extension(state): Extension<Arc<AppState
         let fetched_realm = get_realm_by_id(&state.db, realm_id).await?;
         match fetched_realm {
             Some(fetched_realm) => Ok(Json(fetched_realm)),
-            None => {
-                return Err(Error::not_found());
-            }
+            None => Err(Error::not_found()),
         }
     } else {
-        return Err(Error::Authenticate(AuthenticateError::NoResource));
+        Err(Error::Authenticate(AuthenticateError::NoResource))
     }
 }
 

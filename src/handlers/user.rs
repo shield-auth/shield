@@ -45,7 +45,7 @@ pub async fn get_user(
         let user = user::Entity::find_by_id(user_id).one(&state.db).await?;
         match user {
             Some(user) => Ok(Json(user)),
-            None => return Err(Error::Authenticate(AuthenticateError::NoResource)),
+            None => Err(Error::Authenticate(AuthenticateError::NoResource)),
         }
     } else {
         Err(Error::Authenticate(AuthenticateError::NoResource))
@@ -100,7 +100,7 @@ pub async fn get_resource_group(
         let resource_group = resource_group::Entity::find_by_id(resource_group_id).one(&state.db).await?;
         match resource_group {
             Some(resource_group) => Ok(Json(resource_group)),
-            None => return Err(Error::not_found()),
+            None => Err(Error::not_found()),
         }
     } else {
         Err(Error::Authenticate(AuthenticateError::ActionForbidden))

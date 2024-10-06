@@ -21,10 +21,8 @@ use super::{db::AppState, errors::Error};
 
 pub async fn setup(state: &AppState) -> Result<bool, TransactionError<Error>> {
     info!("Checking ADMIN availability!");
-    let is_admin_user_exists = user::Entity::find()
-        .filter(user::Column::Email.eq(&SETTINGS.read().admin.email))
-        .one(&state.db)
-        .await?;
+    let admin_email = SETTINGS.read().admin.email.clone();
+    let is_admin_user_exists = user::Entity::find().filter(user::Column::Email.eq(admin_email)).one(&state.db).await?;
 
     if is_admin_user_exists.is_some() {
         info!("DB has been already initialized!");

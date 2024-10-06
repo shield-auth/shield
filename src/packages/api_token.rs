@@ -57,13 +57,10 @@ impl ApiTokenUser {
             return Err(Error::Authenticate(AuthenticateError::InvalidApiCredentials));
         }
 
-        match api_user.locked_at {
-            Some(locked_at) => {
-                if locked_at.timestamp() <= chrono::Local::now().timestamp() {
-                    return Err(Error::Authenticate(AuthenticateError::InvalidApiCredentials));
-                }
+        if let Some(locked_at) = api_user.locked_at {
+            if locked_at.timestamp() <= chrono::Local::now().timestamp() {
+                return Err(Error::Authenticate(AuthenticateError::InvalidApiCredentials));
             }
-            None => {}
         }
 
         if api_user.secret != secret {

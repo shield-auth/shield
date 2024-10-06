@@ -10,5 +10,5 @@ pub fn check_locked_at_constraint(locked_at: &Option<sea_orm::sqlx::types::chron
             return Err(DbErr::Custom("Cannot lock the client".to_owned()));
         }
     }
-    return Ok(());
+    Ok(())
 }
