@@ -8,7 +8,7 @@ env:
   CARGO_TERM_COLOR: always
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-  IMAGE_NAME: "shieldauth/shield"
+  IMAGE_NAME: "camksingh/shield"
   CIRCLECI_TOKEN: ${{ secrets.CIRCLECI_TOKEN }}
 
 jobs:
@@ -18,42 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Check CircleCI Build Status
-        run: |
-          # Loop to check CircleCI build status until it is complete
-          while : ; do
-            CIRCLECI_STATUS=$(curl -s -f -u ${CIRCLECI_TOKEN}: \
-              "https://circleci.com/api/v2/project/github/shield-auth/shield/pipeline?branch=trunk" | \
-              jq -r '.items[0].state')
-
-            # If status is running, wait and check again in 30 seconds
-            if [ "$CIRCLECI_STATUS" == "running" ]; then
-              echo "CircleCI build is still running. Waiting for 30 seconds..."
-              sleep 30
-              continue
-            fi
-
-            # If status is failed, exit
-            if [ "$CIRCLECI_STATUS" == "failed" ]; then
-              echo "CircleCI build failed. Exiting."
-              exit 1
-            fi
-
-            # If status is successful, proceed
-            if [ "$CIRCLECI_STATUS" == "success" ]; then
-              echo "CircleCI build passed. Proceeding with Docker build and push."
-              break
-            fi
-
-            # If status is unknown, exit
-            if [ -z "$CIRCLECI_STATUS" ]; then
-              echo "Unable to determine CircleCI build status. Exiting."
-              exit 1
-            fi
-          done
-
       - name: Build the project
-        run: cargo build --verbose
+        run: cargo build --release --verbose
 
       - name: Run tests
         run: cargo test --verbose
