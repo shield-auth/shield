@@ -1,5 +1,5 @@
 use entity::sea_orm_active_enums::{ApiUserAccess, ApiUserRole};
-use sea_orm::{prelude::Uuid, DatabaseConnection};
+use sea_orm::prelude::Uuid;
 
 use crate::packages::{api_token::ApiTokenUser, token_user::TokenUser};
 
