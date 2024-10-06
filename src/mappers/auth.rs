@@ -53,3 +53,15 @@ pub struct IntrospectResponse {
     pub resource_group: String,
     pub resources: Vec<String>,
 }
+
+#[derive(Deserialize)]
+pub struct RefreshTokenRequest {
+    pub refresh_token: String,
+}
+
+#[derive(Serialize)]
+pub struct RefreshTokenResponse {
+    pub access_token: String,
+    pub refresh_token: String,
+    pub expires_in: usize,
+}

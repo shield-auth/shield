@@ -17,6 +17,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Realm::Slug).string().unique_key().not_null())
                     .col(ColumnDef::new(Realm::MaxConcurrentSessions).integer())
                     .col(ColumnDef::new(Realm::SessionLifetime).integer().not_null().default(300))
+                    .col(ColumnDef::new(Realm::UseRefreshToken).boolean().not_null().default(true))
                     .col(ColumnDef::new(Realm::RefreshTokenLifetime).integer().not_null().default(3600))
                     .col(ColumnDef::new(Realm::RefreshTokenReuseLimit).integer().not_null().default(0))
                     .col(ColumnDef::new(Realm::LockedAt).timestamp_with_time_zone())
@@ -50,6 +51,7 @@ pub enum Realm {
     Slug,
     MaxConcurrentSessions,
     SessionLifetime,
+    UseRefreshToken,
     RefreshTokenLifetime,
     RefreshTokenReuseLimit,
     LockedAt,
