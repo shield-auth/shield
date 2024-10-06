@@ -34,7 +34,6 @@
 | :- | :-: | :-: |
 | ![trunk](https://img.shields.io/badge/trunk-orange)   |   [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk)   |  [![codecov](https://codecov.io/gh/AutomationTank/shield/branch/trunk/graph/badge.svg?token=1S0S4T1Z1J)](https://codecov.io/gh/AutomationTank/shield)  |
 | ![develop](https://img.shields.io/badge/develop-blue) | [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/develop) | [![codecov](https://codecov.io/gh/AutomationTank/shield/branch/develop/graph/badge.svg?token=1S0S4T1Z1J)](https://codecov.io/gh/AutomationTank/shield) |
-|         |
 
 </div>
 
