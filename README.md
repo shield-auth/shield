@@ -26,8 +26,8 @@
   <a href="https://discord.gg/geWjd2hR">
     <img alt="discord" src="https://img.shields.io/discord/1159247000093609994?logo=discord"/>
   </a>
-  <a href="https://twitter.com/rustsea_hq">
-    <img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/rustsea_hq">
+  <a href="https://twitter.com/shield_auth">
+    <img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/shield_auth">
   </a>
 </p>
 <!-- markdownlint-restore -->
