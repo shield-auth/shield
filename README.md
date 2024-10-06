@@ -15,8 +15,8 @@
   <a href="https://docs.rs/rust-shield">
     <img alt="crate-docs" src="https://img.shields.io/badge/docs-docs.rs-orange?logo=rust">
   </a>
-  <a href="https://circleci.com/gh/AutomationTank/shield">
-    <img alt="build status" src="https://circleci.com/gh/AutomationTank/shield.svg?style=shield"/>
+  <a href="[[![CircleCI](https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk.svg?style=svg)]()](https://dl.circleci.com/status-badge/redirect/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk)">
+    <img alt="build status" src="https://dl.circleci.com/status-badge/img/circleci/PKLAPqiFRA5ffRQTi5dtfY/HvBHutnD43T9HBYcqAWgD4/tree/trunk.svg?style=svg"/>
   </a>
 </p>
 <p align="center">
