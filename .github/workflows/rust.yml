@@ -22,7 +22,7 @@ jobs:
         run: |
           # Loop to check CircleCI build status until it is complete
           while : ; do
-            CIRCLECI_STATUS=$(curl -s -u ${CIRCLECI_TOKEN}: \
+            CIRCLECI_STATUS=$(curl -s -f -u ${CIRCLECI_TOKEN}: \
               "https://circleci.com/api/v2/project/github/shield-auth/shield/pipeline?branch=trunk" | \
               jq -r '.items[0].state')
 
