@@ -27,7 +27,7 @@ jobs:
 
       - name: Determine version from release
         run: |
-          if [[ "$GITHUB_REF" =~ ^refs/tags/v([0-9]+.[0-9]+.[0-9]+)$ ]]; then
+          if [[ "$GITHUB_REF" =~ ^refs/tags/v([0-9]+.[0-9]+.[0-9]+)(-[alpha|beta])?$ ]]; then
             VERSION="${BASH_REMATCH[1]}"
           else
             echo "Invalid release tag format. Exiting."
