@@ -13,7 +13,7 @@ use crate::{
     },
     middleware::session_info_extractor::SessionInfo,
     packages::{
-        api_token::ApiTokenUser,
+        api_token::{decode_refresh_token, ApiTokenUser},
         db::AppState,
         errors::{AuthenticateError, Error},
         settings::SETTINGS,
@@ -360,25 +360,24 @@ pub async fn introspect(
 pub async fn refresh_token(
     user: ApiTokenUser,
     Extension(state): Extension<Arc<AppState>>,
-    Path((_realm_id, client_id)): Path<(Uuid, Uuid)>,
+    Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<RefreshTokenRequest>,
 ) -> Result<Json<RefreshTokenResponse>, Error> {
     if has_access_to_api_cred(&user, ApiUserRole::ClientAdmin, ApiUserAccess::Admin).await {
-        let token_data = decode(&payload.refresh_token, &SETTINGS.read().secrets.signing_key).expect("Failed to decode token");
+        let token_data = decode_refresh_token(&payload.refresh_token, &SETTINGS.read().secrets.signing_key).expect("Failed to decode token");
 
-        if token_data.claims.resource.is_none() || token_data.claims.resource.is_some() && token_data.claims.resource.unwrap().client_id != client_id
-        {
+        if token_data.claims.rli != realm_id || token_data.claims.cli != client_id {
             return Err(Error::Authenticate(AuthenticateError::ActionForbidden));
         }
 
         let session = session::Entity::find_by_id(token_data.claims.sid).one(&state.db).await?;
-        if session.is_none() {
-            return Err(Error::Authenticate(AuthenticateError::InvalidToken));
+        if session.is_some_and(|x| x.expires.timestamp() >= chrono::Local::now().timestamp()) {
+            session::Entity::delete_by_id(token_data.claims.sid).exec(&state.db).await?;
         }
 
-        let session = session.unwrap();
-        if session.expires.timestamp() <= chrono::Local::now().timestamp() {
-            return Err(Error::Authenticate(AuthenticateError::InvalidToken));
+        let client = client::Entity::find_active_by_id(&state.db, token_data.claims.cli).await?;
+        if client.is_none() {
+            return Err(Error::Authenticate(AuthenticateError::ActionForbidden));
         }
 
         Ok(Json(RefreshTokenResponse {

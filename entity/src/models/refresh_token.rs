@@ -4,20 +4,14 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "session")]
+#[sea_orm(table_name = "refresh_token")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub id: Uuid,
-    pub client_id: Uuid,
+    pub session_id: Uuid,
     pub user_id: Uuid,
-    pub ip_address: String,
-    pub user_agent: Option<String>,
-    pub browser: Option<String>,
-    pub browser_version: Option<String>,
-    pub operating_system: Option<String>,
-    pub device_type: Option<String>,
-    pub country_code: String,
-    pub expires: DateTimeWithTimeZone,
+    pub client_id: Option<Uuid>,
+    pub realm_id: Uuid,
+    pub re_used_count: i32,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
 }
@@ -32,8 +26,22 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Client,
-    #[sea_orm(has_one = "super::refresh_token::Entity")]
-    RefreshToken,
+    #[sea_orm(
+        belongs_to = "super::realm::Entity",
+        from = "Column::RealmId",
+        to = "super::realm::Column::Id",
+        on_update = "NoAction",
+        on_delete = "Cascade"
+    )]
+    Realm,
+    #[sea_orm(
+        belongs_to = "super::session::Entity",
+        from = "Column::SessionId",
+        to = "super::session::Column::Id",
+        on_update = "NoAction",
+        on_delete = "Cascade"
+    )]
+    Session,
     #[sea_orm(
         belongs_to = "super::user::Entity",
         from = "Column::UserId",
@@ -50,9 +58,15 @@ impl Related<super::client::Entity> for Entity {
     }
 }
 
-impl Related<super::refresh_token::Entity> for Entity {
+impl Related<super::realm::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::RefreshToken.def()
+        Relation::Realm.def()
+    }
+}
+
+impl Related<super::session::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Session.def()
     }
 }
 
@@ -61,3 +75,5 @@ impl Related<super::user::Entity> for Entity {
         Relation::User.def()
     }
 }
+
+impl ActiveModelBehavior for ActiveModel {}

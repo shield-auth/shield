@@ -28,6 +28,8 @@ pub enum Relation {
     ApiUser,
     #[sea_orm(has_many = "super::client::Entity")]
     Client,
+    #[sea_orm(has_many = "super::refresh_token::Entity")]
+    RefreshToken,
     #[sea_orm(has_many = "super::resource_group::Entity")]
     ResourceGroup,
     #[sea_orm(has_many = "super::user::Entity")]
@@ -43,6 +45,12 @@ impl Related<super::api_user::Entity> for Entity {
 impl Related<super::client::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Client.def()
+    }
+}
+
+impl Related<super::refresh_token::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::RefreshToken.def()
     }
 }
 

@@ -1,3 +1,5 @@
+use jsonwebtoken::{errors::Error as JwtError, DecodingKey, TokenData, Validation};
+use once_cell::sync::Lazy;
 use sea_orm::{
     prelude::{DateTimeWithTimeZone, Uuid},
     DatabaseConnection, EntityTrait,
@@ -10,6 +12,8 @@ use entity::{
 };
 
 use super::errors::{AuthenticateError, Error};
+
+static VALIDATION: Lazy<Validation> = Lazy::new(Validation::default);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiTokenUser {
@@ -69,4 +73,22 @@ impl ApiTokenUser {
 
         Ok(Self::from(api_user))
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RefreshTokenClaims {
+    pub exp: usize,  // Expiration time (as UTC timestamp). validate_exp defaults to true in validation
+    pub iat: usize,  // Issued at (as UTC timestamp)
+    pub iss: String, // Issuer
+    pub sub: Uuid,   // Subject
+    pub sid: Uuid,   // Session ID
+    pub rgi: Uuid,   // Resource Group ID
+    pub cli: Uuid,   // Client ID
+    pub rli: Uuid,   // Realm ID
+}
+
+pub fn decode_refresh_token(token: &str, secret: &str) -> Result<TokenData<RefreshTokenClaims>, JwtError> {
+    let decoding_key = DecodingKey::from_secret(secret.as_ref());
+
+    jsonwebtoken::decode::<RefreshTokenClaims>(token, &decoding_key, &VALIDATION)
 }
