@@ -103,7 +103,7 @@ pub async fn login(
         .db
         .transaction(|txn| {
             Box::pin(async move {
-                let result: Result<LoginResponse, Error> = (|| async {
+                let result: Result<LoginResponse, Error> = async {
                     let refresh_token_model = if client.use_refresh_token {
                         let model = refresh_token::ActiveModel {
                             id: Set(Uuid::now_v7()),
@@ -144,7 +144,7 @@ pub async fn login(
                         client_id: client.id,
                         refresh_token,
                     })
-                })()
+                }
                 .await;
 
                 result.map_err(|e| DbErr::Custom(e.to_string()))
@@ -206,7 +206,7 @@ async fn create_session(
 
     let access_token = create(
         user.clone(),
-        &client,
+        client,
         resource_groups,
         resources,
         &session,
@@ -525,11 +525,11 @@ pub async fn refresh_token(
             .await?;
 
         let refresh_token = refresh_token_claims.create_token(&SETTINGS.read().secrets.signing_key).unwrap();
-        return Ok(Json(RefreshTokenResponse {
+        Ok(Json(RefreshTokenResponse {
             access_token: session.access_token.clone(),
             refresh_token,
             expires_in: token_data.claims.exp - chrono::Local::now().timestamp() as usize,
-        }));
+        }))
     } else {
         Err(Error::Authenticate(AuthenticateError::ActionForbidden))
     }
