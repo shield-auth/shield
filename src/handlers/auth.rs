@@ -5,7 +5,9 @@ use entity::{
     session, user,
 };
 
-use sea_orm::{prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, Set};
+use sea_orm::{
+    prelude::Uuid, ActiveModelTrait, ColumnTrait, DatabaseTransaction, DbErr, EntityTrait, PaginatorTrait, QueryFilter, Set, TransactionTrait,
+};
 use std::sync::Arc;
 
 use crate::{
@@ -40,6 +42,8 @@ pub struct LoginResponse {
     session_id: Uuid,
     realm_id: Uuid,
     client_id: Uuid,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    refresh_token: Option<String>,
 }
 
 pub async fn login(
@@ -95,22 +99,75 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
-    create_session(client, user, resource_groups, session_info, None, state).await
+    let login_response = state
+        .db
+        .transaction(|txn| {
+            Box::pin(async move {
+                let result: Result<LoginResponse, Error> = (|| async {
+                    let refresh_token_model = if client.use_refresh_token {
+                        let model = refresh_token::ActiveModel {
+                            id: Set(Uuid::now_v7()),
+                            user_id: Set(user.id),
+                            client_id: Set(Some(client_id)),
+                            realm_id: Set(realm_id),
+                            re_used_count: Set(0),
+                            locked_at: Set(None),
+                            ..Default::default()
+                        };
+                        Some(model.insert(txn).await?)
+                    } else {
+                        None
+                    };
+
+                    let session = create_session(
+                        &client,
+                        &user,
+                        resource_groups,
+                        session_info,
+                        refresh_token_model.as_ref().map(|x| x.id),
+                        txn,
+                    )
+                    .await?;
+
+                    let refresh_token = if let Some(refresh_token) = refresh_token_model {
+                        let claims = RefreshTokenClaims::from(&refresh_token, &client);
+                        Some(claims.create_token(&SETTINGS.read().secrets.signing_key).unwrap())
+                    } else {
+                        None
+                    };
+
+                    Ok(LoginResponse {
+                        access_token: session.access_token,
+                        realm_id: user.realm_id,
+                        user,
+                        session_id: session.session_id,
+                        client_id: client.id,
+                        refresh_token,
+                    })
+                })()
+                .await;
+
+                result.map_err(|e| DbErr::Custom(e.to_string()))
+            })
+        })
+        .await?;
+
+    Ok(Json(login_response))
 }
 
 async fn create_session(
-    client: client::Model,
-    user: user::Model,
+    client: &client::Model,
+    user: &user::Model,
     resource_groups: resource_group::Model,
     session_info: Arc<SessionInfo>,
     refresh_token_id: Option<Uuid>,
-    state: Arc<AppState>,
-) -> Result<Json<LoginResponse>, Error> {
+    db: &DatabaseTransaction,
+) -> Result<LoginResponse, Error> {
     let sessions = session::Entity::find()
         .filter(session::Column::ClientId.eq(client.id))
         .filter(session::Column::UserId.eq(user.id))
         .filter(session::Column::Expires.gt(chrono::Utc::now()))
-        .count(&state.db)
+        .count(db)
         .await?;
 
     if sessions >= client.max_concurrent_sessions as u64 {
@@ -122,7 +179,7 @@ async fn create_session(
     let resources = resource::Entity::find()
         .filter(resource::Column::GroupId.eq(resource_groups.id))
         .filter(resource::Column::LockedAt.is_null())
-        .all(&state.db)
+        .all(db)
         .await?;
 
     if resources.is_empty() {
@@ -145,7 +202,7 @@ async fn create_session(
         expires: Set((Utc::now() + chrono::Duration::seconds(client.session_lifetime as i64)).into()),
         ..Default::default()
     };
-    let session = session_model.insert(&state.db).await?;
+    let session = session_model.insert(db).await?;
 
     let access_token = create(
         user.clone(),
@@ -157,13 +214,14 @@ async fn create_session(
     )
     .unwrap();
 
-    Ok(Json(LoginResponse {
+    Ok(LoginResponse {
         access_token,
         realm_id: user.realm_id,
-        user,
+        user: user.clone(),
         session_id: session.id,
         client_id: client.id,
-    }))
+        refresh_token: None,
+    })
 }
 
 pub async fn register(
@@ -454,13 +512,24 @@ pub async fn refresh_token(
         }
 
         let refresh_token_claims = RefreshTokenClaims::from(&refresh_token_model, &client);
-        let session = create_session(client, user, resource_groups, session_info, Some(refresh_token.id), state).await?;
+
+        let session = state
+            .db
+            .transaction(|txn| {
+                Box::pin(async move {
+                    Ok(create_session(&client, &user, resource_groups, session_info, Some(refresh_token.id), txn)
+                        .await
+                        .unwrap())
+                })
+            })
+            .await?;
+
         let refresh_token = refresh_token_claims.create_token(&SETTINGS.read().secrets.signing_key).unwrap();
-        Ok(Json(RefreshTokenResponse {
+        return Ok(Json(RefreshTokenResponse {
             access_token: session.access_token.clone(),
             refresh_token,
             expires_in: token_data.claims.exp - chrono::Local::now().timestamp() as usize,
-        }))
+        }));
     } else {
         Err(Error::Authenticate(AuthenticateError::ActionForbidden))
     }

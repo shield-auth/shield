@@ -93,7 +93,7 @@ pub struct RefreshTokenClaims {
 impl RefreshTokenClaims {
     pub fn from(refresh_token: &refresh_token::Model, client: &client::Model) -> Self {
         Self {
-            exp: client.refresh_token_lifetime as usize,
+            exp: chrono::Local::now().timestamp() as usize + client.refresh_token_lifetime as usize,
             iat: chrono::Local::now().timestamp() as usize,
             sub: refresh_token.id,
             sid: refresh_token.user_id,
