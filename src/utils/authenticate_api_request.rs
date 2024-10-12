@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::packages::api_token::ApiTokenUser;
+use crate::packages::api_token::ApiUser;
 use crate::packages::db::AppState;
 use crate::packages::errors::AuthenticateError;
 use crate::packages::errors::Error;
@@ -8,7 +8,7 @@ use crate::packages::errors::Error;
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
 
 #[async_trait]
-impl<S> FromRequestParts<S> for ApiTokenUser
+impl<S> FromRequestParts<S> for ApiUser
 where
     S: Send + Sync,
 {
@@ -18,7 +18,7 @@ where
         let state = parts.extensions.get::<Arc<AppState>>().expect("AppState not found");
 
         if let Some(api_key) = parts.headers.get("Api-Key").and_then(|v| v.to_str().ok()) {
-            return ApiTokenUser::validate_cred(&state.db, api_key).await;
+            return ApiUser::validate_cred(&state.db, api_key).await;
         }
 
         Err(Error::Authenticate(AuthenticateError::InvalidApiCredentials))

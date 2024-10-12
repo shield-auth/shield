@@ -15,13 +15,13 @@ use crate::packages::db::AppState;
 use crate::{
     packages::{
         errors::{AuthenticateError, Error},
-        token_user::TokenUser,
+        jwt_token::JwtUser,
     },
     utils::role_checker::{is_current_realm_admin, is_master_realm_admin},
 };
 
 pub async fn get_users(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path(realm_id): Path<Uuid>,
 ) -> Result<Json<Vec<user::Model>>, Error> {
@@ -37,7 +37,7 @@ pub async fn get_users(
 }
 
 pub async fn get_user(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<user::Model>, Error> {
@@ -53,7 +53,7 @@ pub async fn get_user(
 }
 
 pub async fn delete_user(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<DeleteResponse>, Error> {
@@ -75,7 +75,7 @@ pub async fn delete_user(
 }
 
 pub async fn get_resource_groups(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Vec<resource_group::Model>>, Error> {
@@ -92,7 +92,7 @@ pub async fn get_resource_groups(
 }
 
 pub async fn get_resource_group(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _, resource_group_id)): Path<(Uuid, Uuid, Uuid)>,
 ) -> Result<Json<resource_group::Model>, Error> {
@@ -108,7 +108,7 @@ pub async fn get_resource_group(
 }
 
 pub async fn update_resource_group(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _, resource_group_id)): Path<(Uuid, Uuid, Uuid)>,
     Json(payload): Json<UpdateResourceGroupRequest>,
@@ -152,7 +152,7 @@ pub async fn update_resource_group(
 }
 
 pub async fn delete_resource_group(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _, resource_group_id)): Path<(Uuid, Uuid, Uuid)>,
 ) -> Result<Json<DeleteResponse>, Error> {
@@ -176,7 +176,7 @@ pub async fn delete_resource_group(
 }
 
 pub async fn get_resources(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Vec<resource::Model>>, Error> {
@@ -202,7 +202,7 @@ pub async fn get_resources(
 }
 
 pub async fn add_resources(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, user_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<AddResourceRequest>,
@@ -262,7 +262,7 @@ pub async fn add_resources(
 }
 
 pub async fn update_resource(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _, resource_id)): Path<(Uuid, Uuid, Uuid)>,
     Json(payload): Json<UpdateResourceRequest>,
@@ -299,7 +299,7 @@ pub async fn update_resource(
 }
 
 pub async fn delete_resource(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _, resource_id)): Path<(Uuid, Uuid, Uuid)>,
 ) -> Result<Json<DeleteResponse>, Error> {

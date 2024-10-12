@@ -7,11 +7,12 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "refresh_token")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub session_id: Uuid,
+    pub id: Uuid,
     pub user_id: Uuid,
     pub client_id: Option<Uuid>,
     pub realm_id: Uuid,
     pub re_used_count: i32,
+    pub locked_at: Option<DateTimeWithTimeZone>,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
 }
@@ -34,13 +35,7 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Realm,
-    #[sea_orm(
-        belongs_to = "super::session::Entity",
-        from = "Column::SessionId",
-        to = "super::session::Column::Id",
-        on_update = "NoAction",
-        on_delete = "Cascade"
-    )]
+    #[sea_orm(has_many = "super::session::Entity")]
     Session,
     #[sea_orm(
         belongs_to = "super::user::Entity",

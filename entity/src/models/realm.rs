@@ -14,12 +14,12 @@ pub struct Model {
     pub slug: String,
     pub max_concurrent_sessions: Option<i32>,
     pub session_lifetime: i32,
+    pub use_refresh_token: bool,
     pub refresh_token_lifetime: i32,
     pub refresh_token_reuse_limit: i32,
     pub locked_at: Option<DateTimeWithTimeZone>,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    pub use_refresh_token: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

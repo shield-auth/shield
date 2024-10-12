@@ -1,7 +1,6 @@
 use super::m20220101_000002_create_client_table::Client;
 use super::m20220101_000003_create_user_table::User;
 use crate::m20220101_000001_create_realm_table::Realm;
-use crate::m20220101_000006_create_session_table::Session;
 use sea_orm::sqlx::types::chrono;
 use sea_orm_migration::prelude::*;
 
@@ -16,11 +15,12 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(RefreshToken::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(RefreshToken::SessionId).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(RefreshToken::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(RefreshToken::UserId).uuid().not_null())
                     .col(ColumnDef::new(RefreshToken::ClientId).uuid())
                     .col(ColumnDef::new(RefreshToken::RealmId).uuid().not_null())
                     .col(ColumnDef::new(RefreshToken::ReUsedCount).integer().not_null().default(0))
+                    .col(ColumnDef::new(RefreshToken::LockedAt).timestamp_with_time_zone())
                     .col(
                         ColumnDef::new(RefreshToken::CreatedAt)
                             .timestamp_with_time_zone()
@@ -33,18 +33,6 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .default(chrono::Utc::now()),
                     )
-                    .to_owned(),
-            )
-            .await?;
-
-        // Add foreign key constraints
-        manager
-            .create_foreign_key(
-                ForeignKey::create()
-                    .name("fk_refresh_token_session_id")
-                    .from(RefreshToken::Table, RefreshToken::SessionId)
-                    .to(Session::Table, Session::Id)
-                    .on_delete(ForeignKeyAction::Cascade)
                     .to_owned(),
             )
             .await?;
@@ -124,11 +112,12 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 pub enum RefreshToken {
     Table,
-    SessionId,
+    Id,
     UserId,
     ClientId,
     RealmId,
     ReUsedCount,
+    LockedAt,
     CreatedAt,
     UpdatedAt,
 }

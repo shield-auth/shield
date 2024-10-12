@@ -9,6 +9,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub client_id: Uuid,
+    pub refresh_token_id: Option<Uuid>,
     pub user_id: Uuid,
     pub ip_address: String,
     pub user_agent: Option<String>,
@@ -32,7 +33,13 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Client,
-    #[sea_orm(has_one = "super::refresh_token::Entity")]
+    #[sea_orm(
+        belongs_to = "super::refresh_token::Entity",
+        from = "Column::RefreshTokenId",
+        to = "super::refresh_token::Column::Id",
+        on_update = "NoAction",
+        on_delete = "SetNull"
+    )]
     RefreshToken,
     #[sea_orm(
         belongs_to = "super::user::Entity",

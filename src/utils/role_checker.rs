@@ -1,11 +1,11 @@
 use entity::sea_orm_active_enums::{ApiUserAccess, ApiUserRole};
 use sea_orm::prelude::Uuid;
 
-use crate::packages::{api_token::ApiTokenUser, token_user::TokenUser};
+use crate::packages::{api_token::ApiUser, jwt_token::JwtUser};
 
 use super::default_resource_checker::is_default_realm;
 
-pub fn is_master_realm_admin(user: &TokenUser) -> bool {
+pub fn is_master_realm_admin(user: &JwtUser) -> bool {
     let resource = match &user.resource {
         Some(resource) => resource,
         None => return false,
@@ -22,7 +22,7 @@ pub fn is_master_realm_admin(user: &TokenUser) -> bool {
     is_admin && is_master_realm
 }
 
-pub fn is_current_realm_admin(user: &TokenUser, realm_id: &str) -> bool {
+pub fn is_current_realm_admin(user: &JwtUser, realm_id: &str) -> bool {
     user.resource.as_ref().is_some_and(|x| {
         x.identifiers
             .get("realm")
@@ -30,7 +30,7 @@ pub fn is_current_realm_admin(user: &TokenUser, realm_id: &str) -> bool {
     })
 }
 
-pub async fn has_access_to_api_cred(api_user: &ApiTokenUser, role: ApiUserRole, access: ApiUserAccess) -> bool {
+pub async fn has_access_to_api_cred(api_user: &ApiUser, role: ApiUserRole, access: ApiUserAccess) -> bool {
     if api_user.role != role {
         return false;
     }

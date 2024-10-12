@@ -1,3 +1,5 @@
+use crate::m20220101_000006_create_refresh_token_table::RefreshToken;
+
 use super::m20220101_000002_create_client_table::Client;
 use super::m20220101_000003_create_user_table::User;
 use sea_orm::sqlx::types::chrono;
@@ -22,6 +24,14 @@ impl MigrationTrait for Migration {
                             .from(Session::Table, Session::ClientId)
                             .to(Client::Table, Client::Id)
                             .on_delete(ForeignKeyAction::Cascade),
+                    )
+                    .col(ColumnDef::new(Session::RefreshTokenId).uuid())
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk_session_refresh_token_id")
+                            .from(Session::Table, Session::RefreshTokenId)
+                            .to(RefreshToken::Table, RefreshToken::Id)
+                            .on_delete(ForeignKeyAction::SetNull),
                     )
                     .col(ColumnDef::new(Session::UserId).uuid().not_null())
                     .foreign_key(
@@ -67,6 +77,7 @@ pub enum Session {
     Id,
     UserId,
     ClientId,
+    RefreshTokenId,
     IpAddress,
     UserAgent,
     Browser,

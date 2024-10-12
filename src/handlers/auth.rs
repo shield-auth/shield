@@ -1,9 +1,10 @@
 use chrono::Utc;
 use entity::{
-    client, resource, resource_group,
+    client, refresh_token, resource, resource_group,
     sea_orm_active_enums::{ApiUserAccess, ApiUserRole},
     session, user,
 };
+
 use sea_orm::{prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, Set};
 use std::sync::Arc;
 
@@ -13,11 +14,11 @@ use crate::{
     },
     middleware::session_info_extractor::SessionInfo,
     packages::{
-        api_token::{decode_refresh_token, ApiTokenUser},
+        api_token::{decode_refresh_token, ApiUser, RefreshTokenClaims},
         db::AppState,
         errors::{AuthenticateError, Error},
+        jwt_token::{create, decode, JwtUser},
         settings::SETTINGS,
-        token_user::{create, decode, TokenUser},
     },
     services::user::insert_user,
     utils::role_checker::{has_access_to_api_cred, is_current_realm_admin, is_master_realm_admin},
@@ -36,6 +37,7 @@ pub struct Credentials {
 pub struct LoginResponse {
     access_token: String,
     user: user::Model,
+    session_id: Uuid,
     realm_id: Uuid,
     client_id: Uuid,
 }
@@ -47,6 +49,7 @@ pub async fn login(
     Json(payload): Json<Credentials>,
 ) -> Result<Json<LoginResponse>, Error> {
     debug!("🚀 Login request received! {:#?}", session_info);
+
     let user_with_resource_groups = user::Entity::find()
         .filter(user::Column::Email.eq(payload.email))
         .find_also_related(resource_group::Entity)
@@ -92,6 +95,17 @@ pub async fn login(
         return Err(Error::Authenticate(AuthenticateError::Locked));
     }
 
+    create_session(client, user, resource_groups, session_info, None, state).await
+}
+
+async fn create_session(
+    client: client::Model,
+    user: user::Model,
+    resource_groups: resource_group::Model,
+    session_info: Arc<SessionInfo>,
+    refresh_token_id: Option<Uuid>,
+    state: Arc<AppState>,
+) -> Result<Json<LoginResponse>, Error> {
     let sessions = session::Entity::find()
         .filter(session::Column::ClientId.eq(client.id))
         .filter(session::Column::UserId.eq(user.id))
@@ -127,6 +141,7 @@ pub async fn login(
         operating_system: Set(Some(session_info.operating_system.to_string())),
         device_type: Set(Some(session_info.device_type.to_string())),
         country_code: Set(session_info.country_code.to_string()),
+        refresh_token_id: Set(refresh_token_id),
         expires: Set((Utc::now() + chrono::Duration::seconds(client.session_lifetime as i64)).into()),
         ..Default::default()
     };
@@ -134,24 +149,25 @@ pub async fn login(
 
     let access_token = create(
         user.clone(),
-        client,
+        &client,
         resource_groups,
         resources,
-        session,
+        &session,
         &SETTINGS.read().secrets.signing_key,
     )
     .unwrap();
 
     Ok(Json(LoginResponse {
         access_token,
+        realm_id: user.realm_id,
         user,
-        realm_id,
-        client_id,
+        session_id: session.id,
+        client_id: client.id,
     }))
 }
 
 pub async fn register(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<CreateUserRequest>,
@@ -164,7 +180,7 @@ pub async fn register(
     }
 }
 
-pub async fn logout_current_session(user: TokenUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<LogoutResponse>, Error> {
+pub async fn logout_current_session(user: JwtUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<LogoutResponse>, Error> {
     let result = session::Entity::delete_by_id(user.sid).exec(&state.db).await?;
     Ok(Json(LogoutResponse {
         ok: result.rows_affected == 1,
@@ -174,7 +190,7 @@ pub async fn logout_current_session(user: TokenUser, Extension(state): Extension
 }
 
 pub async fn logout(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _)): Path<(Uuid, Uuid)>,
     Json(payload): Json<LogoutRequest>,
@@ -215,7 +231,7 @@ pub async fn logout(
 }
 
 pub async fn logout_my_all_sessions(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((_, client_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<LogoutResponse>, Error> {
@@ -232,7 +248,7 @@ pub async fn logout_my_all_sessions(
 }
 
 pub async fn logout_all(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<LogoutRequest>,
@@ -281,7 +297,7 @@ pub async fn logout_all(
 }
 
 pub async fn introspect(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<IntrospectRequest>,
@@ -358,32 +374,91 @@ pub async fn introspect(
 }
 
 pub async fn refresh_token(
-    user: ApiTokenUser,
+    user: ApiUser,
     Extension(state): Extension<Arc<AppState>>,
+    Extension(session_info): Extension<Arc<SessionInfo>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<RefreshTokenRequest>,
 ) -> Result<Json<RefreshTokenResponse>, Error> {
     if has_access_to_api_cred(&user, ApiUserRole::ClientAdmin, ApiUserAccess::Admin).await {
         let token_data = decode_refresh_token(&payload.refresh_token, &SETTINGS.read().secrets.signing_key).expect("Failed to decode token");
-
         if token_data.claims.rli != realm_id || token_data.claims.cli != client_id {
-            return Err(Error::Authenticate(AuthenticateError::ActionForbidden));
+            return Err(Error::Authenticate(AuthenticateError::InvalidToken));
         }
 
-        let session = session::Entity::find_by_id(token_data.claims.sid).one(&state.db).await?;
-        if session.is_some_and(|x| x.expires.timestamp() >= chrono::Local::now().timestamp()) {
-            session::Entity::delete_by_id(token_data.claims.sid).exec(&state.db).await?;
+        let refresh_token = refresh_token::Entity::find_active_by_id(&state.db, token_data.claims.sub).await?;
+        if refresh_token.is_none() {
+            return Err(Error::not_found());
         }
-
         let client = client::Entity::find_active_by_id(&state.db, token_data.claims.cli).await?;
         if client.is_none() {
-            return Err(Error::Authenticate(AuthenticateError::ActionForbidden));
+            return Err(Error::Authenticate(AuthenticateError::InvalidToken));
         }
 
+        let refresh_token = refresh_token.unwrap();
+        let client = client.unwrap();
+
+        let refresh_token_model = if refresh_token.re_used_count >= client.refresh_token_reuse_limit {
+            let model = refresh_token::ActiveModel {
+                id: Set(Uuid::now_v7()),
+                user_id: Set(user.id),
+                client_id: Set(Some(client_id)),
+                realm_id: Set(realm_id),
+                re_used_count: Set(0),
+                locked_at: Set(None),
+                ..Default::default()
+            };
+            model.insert(&state.db).await?
+        } else {
+            let model = refresh_token::ActiveModel {
+                id: Set(refresh_token.id),
+                user_id: Set(refresh_token.user_id),
+                client_id: Set(refresh_token.client_id),
+                realm_id: Set(refresh_token.realm_id),
+                re_used_count: Set(refresh_token.re_used_count + 1),
+                locked_at: Set(None),
+                ..Default::default()
+            };
+            model.update(&state.db).await?
+        };
+
+        // Fetch user and resource groups
+        let user_with_resource_groups = user::Entity::find()
+            .filter(user::Column::Id.eq(refresh_token.user_id))
+            .find_also_related(resource_group::Entity)
+            .filter(resource_group::Column::RealmId.eq(realm_id))
+            .filter(resource_group::Column::ClientId.eq(client_id))
+            .one(&state.db)
+            .await?;
+
+        if user_with_resource_groups.is_none() {
+            debug!("No matching data found");
+            return Err(Error::not_found());
+        }
+
+        let (user, resource_groups) = user_with_resource_groups.unwrap();
+        if user.locked_at.is_some() {
+            debug!("User is locked");
+            return Err(Error::Authenticate(AuthenticateError::Locked));
+        }
+
+        if resource_groups.is_none() {
+            debug!("No matching resource group found");
+            return Err(Error::not_found());
+        }
+
+        let resource_groups = resource_groups.unwrap();
+        if resource_groups.locked_at.is_some() {
+            debug!("Resource group is locked");
+            return Err(Error::Authenticate(AuthenticateError::Locked));
+        }
+
+        let refresh_token_claims = RefreshTokenClaims::from(&refresh_token_model, &client);
+        let session = create_session(client, user, resource_groups, session_info, Some(refresh_token.id), state).await?;
+        let refresh_token = refresh_token_claims.create_token(&SETTINGS.read().secrets.signing_key).unwrap();
         Ok(Json(RefreshTokenResponse {
-            // TODO: Create set of access and refresh tokens depending upon refresh_token_reuse_limit
-            access_token: token_data.claims.sub.to_string(),
-            refresh_token: token_data.claims.sub.to_string(),
+            access_token: session.access_token.clone(),
+            refresh_token,
             expires_in: token_data.claims.exp - chrono::Local::now().timestamp() as usize,
         }))
     } else {
