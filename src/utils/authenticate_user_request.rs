@@ -1,8 +1,8 @@
 use crate::packages::errors::AuthenticateError;
 use crate::packages::errors::Error;
+use crate::packages::jwt_token;
+use crate::packages::jwt_token::JwtUser;
 use crate::packages::settings::SETTINGS;
-use crate::packages::token_user;
-use crate::packages::token_user::TokenUser;
 
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts, RequestPartsExt};
 
@@ -12,7 +12,7 @@ use axum_extra::{
 };
 
 #[async_trait]
-impl<S> FromRequestParts<S> for TokenUser
+impl<S> FromRequestParts<S> for JwtUser
 where
     S: Send + Sync,
 {
@@ -25,8 +25,8 @@ where
             .map_err(|_| AuthenticateError::InvalidToken)?;
 
         let secret = &SETTINGS.read().secrets.signing_key;
-        let token_data = token_user::decode(bearer.token(), secret).map_err(|_| AuthenticateError::InvalidToken)?;
+        let token_data = jwt_token::decode(bearer.token(), secret).map_err(|_| AuthenticateError::InvalidToken)?;
 
-        Ok(TokenUser::from_claim(token_data.claims))
+        Ok(JwtUser::from_claim(token_data.claims))
     }
 }

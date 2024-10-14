@@ -2,7 +2,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use bcrypt::BcryptError;
-use sea_orm::DbErr;
+use sea_orm::{DbErr, TransactionError};
 use serde_json::json;
 use std::io;
 use tokio::task::JoinError;
@@ -19,6 +19,9 @@ pub enum Error {
 
     #[error("Database error: {0}")]
     Database(#[from] DatabaseError),
+
+    #[error("Transaction error: {0}")]
+    DbTransaction(Box<dyn std::error::Error + Send + Sync>, StatusCode),
 
     #[error("{0}")]
     NotFound(#[from] NotFound),
@@ -50,6 +53,7 @@ impl Error {
             Error::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5007),
             Error::File(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5008),
             Error::SerdeJson(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5009),
+            Error::DbTransaction(_, status_code) => (*status_code, 5010),
         }
     }
 
@@ -107,6 +111,24 @@ impl AuthenticateError {
             AuthenticateError::ActionForbidden => (StatusCode::FORBIDDEN, 40009),
             AuthenticateError::MaxConcurrentSessions => (StatusCode::LOCKED, 40010),
             AuthenticateError::InvalidApiCredentials => (StatusCode::FORBIDDEN, 40011),
+        }
+    }
+}
+
+impl From<TransactionError<DbErr>> for Error {
+    fn from(err: TransactionError<DbErr>) -> Self {
+        match err {
+            TransactionError::Connection(db_err) => Error::DbTransaction(Box::new(db_err), StatusCode::INTERNAL_SERVER_ERROR),
+            TransactionError::Transaction(db_err) => {
+                // Here we can check if db_err has a specific status code
+                let status_code = match db_err {
+                    DbErr::RecordNotFound(_) => StatusCode::NOT_FOUND,
+                    DbErr::Custom(ref e) if e.contains("duplicate key value") => StatusCode::CONFLICT,
+                    // Add more specific cases as needed
+                    _ => StatusCode::INTERNAL_SERVER_ERROR,
+                };
+                Error::DbTransaction(Box::new(db_err), status_code)
+            }
         }
     }
 }

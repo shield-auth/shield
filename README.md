@@ -44,3 +44,8 @@
 </p>
 
 The **Rust** based **Open Source Identity and Access Management** (Inspired by [Keycloak](https://www.keycloak.org))
+
+> Sea-ORM Entity Generation Command
+```bash
+sea-orm-cli generate entity -o entity/src/models --with-serde both --enum-extra-attributes 'serde(rename_all = "snake_case")'
+```

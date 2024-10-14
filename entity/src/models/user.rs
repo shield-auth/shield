@@ -34,6 +34,8 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Realm,
+    #[sea_orm(has_many = "super::refresh_token::Entity")]
+    RefreshToken,
     #[sea_orm(has_many = "super::resource_group::Entity")]
     ResourceGroup,
     #[sea_orm(has_many = "super::session::Entity")]
@@ -43,6 +45,12 @@ pub enum Relation {
 impl Related<super::realm::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Realm.def()
+    }
+}
+
+impl Related<super::refresh_token::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::RefreshToken.def()
     }
 }
 

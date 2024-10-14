@@ -22,7 +22,7 @@ pub struct Resource {
 }
 
 impl Resource {
-    fn from(client: client::Model, resource_group: resource_group::Model, resources: Vec<resource::Model>) -> Self {
+    fn from(client: &client::Model, resource_group: resource_group::Model, resources: Vec<resource::Model>) -> Self {
         let mut identifiers = HashMap::new();
         for resource in resources {
             identifiers.insert(resource.name, resource.value);
@@ -30,7 +30,7 @@ impl Resource {
 
         Self {
             client_id: client.id,
-            client_name: client.name,
+            client_name: client.name.clone(),
             group_name: resource_group.name,
             identifiers,
         }
@@ -38,7 +38,7 @@ impl Resource {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TokenUser {
+pub struct JwtUser {
     pub sub: Uuid,
     pub sid: Uuid,
     #[serde(rename = "firstName")]
@@ -51,10 +51,10 @@ pub struct TokenUser {
     pub resource: Option<Resource>,
 }
 
-impl TokenUser {
+impl JwtUser {
     fn from(
         user: user::Model,
-        client: client::Model,
+        client: &client::Model,
         resource_group: resource_group::Model,
         resources: Vec<resource::Model>,
         session: &session::Model,
@@ -100,12 +100,12 @@ pub struct Claims {
 impl Claims {
     pub fn new(
         user: user::Model,
-        client: client::Model,
+        client: &client::Model,
         resource_group: resource_group::Model,
         resources: Vec<resource::Model>,
-        session: session::Model,
+        session: &session::Model,
     ) -> Self {
-        let user = TokenUser::from(user, client, resource_group, resources, &session);
+        let user = JwtUser::from(user, client, resource_group, resources, session);
 
         Self {
             exp: session.expires.timestamp() as usize,
@@ -124,10 +124,10 @@ impl Claims {
 
 pub fn create(
     user: user::Model,
-    client: client::Model,
+    client: &client::Model,
     resource_group: resource_group::Model,
     resources: Vec<resource::Model>,
-    session: session::Model,
+    session: &session::Model,
     secret: &str,
 ) -> Result<String, Error> {
     let encoding_key = EncodingKey::from_secret(secret.as_ref());

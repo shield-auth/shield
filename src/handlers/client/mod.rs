@@ -9,7 +9,7 @@ use crate::{
     packages::{
         db::AppState,
         errors::{AuthenticateError, Error},
-        token_user::TokenUser,
+        jwt_token::JwtUser,
     },
     services::client::{delete_client_by_id, get_all_clients, get_client_by_id, insert_client, update_client_by_id},
     utils::{
@@ -22,7 +22,7 @@ use entity::client;
 use sea_orm::prelude::Uuid;
 
 pub async fn get_clients(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path(realm_id): Path<Uuid>,
 ) -> Result<Json<Vec<client::Model>>, Error> {
@@ -38,7 +38,7 @@ pub async fn get_clients(
 }
 
 pub async fn get_client(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<client::Model>, Error> {
@@ -54,7 +54,7 @@ pub async fn get_client(
 }
 
 pub async fn create_client(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path(realm_id): Path<Uuid>,
     Json(payload): Json<CreateClientRequest>,
@@ -68,7 +68,7 @@ pub async fn create_client(
 }
 
 pub async fn update_client(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<UpdateClientRequest>,
@@ -82,7 +82,7 @@ pub async fn update_client(
 }
 
 pub async fn delete_client(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<DeleteResponse>, Error> {

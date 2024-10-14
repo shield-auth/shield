@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Deserialize)]
 pub struct ResourceSubset {

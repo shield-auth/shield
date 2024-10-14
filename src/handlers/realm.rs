@@ -12,7 +12,7 @@ use crate::{
     packages::{
         db::AppState,
         errors::{AuthenticateError, Error},
-        token_user::TokenUser,
+        jwt_token::JwtUser,
     },
     services::realm::{delete_realm_by_id, get_all_realms, get_realm_by_id, insert_realm, update_realm_by_id},
     utils::{
@@ -21,7 +21,7 @@ use crate::{
     },
 };
 
-pub async fn get_realms(user: TokenUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<Vec<realm::Model>>, Error> {
+pub async fn get_realms(user: JwtUser, Extension(state): Extension<Arc<AppState>>) -> Result<Json<Vec<realm::Model>>, Error> {
     if is_master_realm_admin(&user) {
         let realms = get_all_realms(&state.db).await?;
         if realms.is_empty() {
@@ -33,7 +33,7 @@ pub async fn get_realms(user: TokenUser, Extension(state): Extension<Arc<AppStat
     Err(Error::Authenticate(AuthenticateError::NoResource))
 }
 
-pub async fn get_realm(user: TokenUser, Extension(state): Extension<Arc<AppState>>, Path(realm_id): Path<Uuid>) -> Result<Json<realm::Model>, Error> {
+pub async fn get_realm(user: JwtUser, Extension(state): Extension<Arc<AppState>>, Path(realm_id): Path<Uuid>) -> Result<Json<realm::Model>, Error> {
     if is_master_realm_admin(&user) || is_current_realm_admin(&user, &realm_id.to_string()) {
         let fetched_realm = get_realm_by_id(&state.db, realm_id).await?;
         match fetched_realm {
@@ -46,7 +46,7 @@ pub async fn get_realm(user: TokenUser, Extension(state): Extension<Arc<AppState
 }
 
 pub async fn create_realm(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Json(payload): Json<CreateRealmRequest>,
 ) -> Result<Json<realm::Model>, Error> {
@@ -59,7 +59,7 @@ pub async fn create_realm(
 }
 
 pub async fn update_realm(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path(realm_id): Path<Uuid>,
     Json(payload): Json<UpdateRealmRequest>,
@@ -73,7 +73,7 @@ pub async fn update_realm(
 }
 
 pub async fn delete_realm(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path(realm_id): Path<Uuid>,
 ) -> Result<Json<DeleteResponse>, Error> {

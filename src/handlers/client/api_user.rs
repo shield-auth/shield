@@ -14,7 +14,7 @@ use crate::{
     packages::{
         db::AppState,
         errors::{AuthenticateError, Error},
-        token_user::TokenUser,
+        jwt_token::JwtUser,
     },
     utils::{
         helpers::generate_random_string::{generate_random_string, Length},
@@ -23,7 +23,7 @@ use crate::{
 };
 
 pub async fn get_api_users(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Vec<api_user::Model>>, Error> {
@@ -40,7 +40,7 @@ pub async fn get_api_users(
 }
 
 pub async fn create_api_user(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<CreateApiUserRequest>,
@@ -71,7 +71,7 @@ pub async fn create_api_user(
 }
 
 pub async fn update_api_user(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _client_id, api_user_id)): Path<(Uuid, Uuid, Uuid)>,
     Json(payload): Json<UpdateApiUserRequest>,
@@ -123,7 +123,7 @@ pub async fn update_api_user(
 }
 
 pub async fn delete_api_user(
-    user: TokenUser,
+    user: JwtUser,
     Extension(state): Extension<Arc<AppState>>,
     Path((realm_id, _client_id, api_user_id)): Path<(Uuid, Uuid, Uuid)>,
 ) -> Result<Json<DeleteResponse>, Error> {
