@@ -2,7 +2,7 @@ use jsonwebtoken::{errors::Error as JwtError, DecodingKey, EncodingKey, Header, 
 use once_cell::sync::Lazy;
 use sea_orm::{
     prelude::{DateTimeWithTimeZone, Uuid},
-    DatabaseConnection, EntityTrait,
+    DatabaseConnection,
 };
 use serde::{Deserialize, Serialize};
 
@@ -55,7 +55,7 @@ impl ApiUser {
             .map_err(|_| Error::Authenticate(AuthenticateError::InvalidApiCredentials))?;
         let secret = parts[1];
 
-        let api_user = api_user::Entity::find_by_id(id).one(db).await?;
+        let api_user = api_user::Entity::find_active_by_id(db, id).await?;
         if api_user.is_none() {
             return Err(Error::Authenticate(AuthenticateError::InvalidApiCredentials));
         }
