@@ -7,90 +7,6 @@
 	},
 	"item": [
 		{
-			"name": "Organization",
-			"item": [
-				{
-					"name": "Projects",
-					"item": [
-						{
-							"name": "Get Projects",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{BASE_URL}}/organizations/{{ORGANIZATION_ID}}/projects",
-									"host": [
-										"{{BASE_URL}}"
-									],
-									"path": [
-										"organizations",
-										"{{ORGANIZATION_ID}}",
-										"projects"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Get Project Details",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{BASE_URL}}/organizations/{{ORGANIZATION_ID}}/projects/{{PROJECT_ID}}",
-									"host": [
-										"{{BASE_URL}}"
-									],
-									"path": [
-										"organizations",
-										"{{ORGANIZATION_ID}}",
-										"projects",
-										"{{PROJECT_ID}}"
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
-				{
-					"name": "Get Organizations",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{BASE_URL}}/organizations",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"organizations"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Organization Details",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{BASE_URL}}/organizations/{{ORGANIZATION_ID}}",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"organizations",
-								"{{ORGANIZATION_ID}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
 			"name": "Realm",
 			"item": [
 				{
@@ -101,12 +17,55 @@
 							"item": [
 								{
 									"name": "Create API User",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Response status code is 200\", function () {\r",
+													"    pm.response.to.have.status(200);\r",
+													"});\r",
+													"\r",
+													"pm.test(\"Response body has required properties\", function () {\r",
+													"    var responseJSON = pm.response.json();\r",
+													"    pm.expect(responseJSON).to.have.property('api_key');\r",
+													"    pm.expect(responseJSON).to.have.property('role');\r",
+													"    pm.expect(responseJSON).to.have.property('access');\r",
+													"    pm.expect(responseJSON).to.have.property('client_id');\r",
+													"    pm.expect(responseJSON).to.have.property('realm_id');\r",
+													"    pm.expect(responseJSON).to.have.property('name');\r",
+													"    pm.expect(responseJSON).to.have.property('id');\r",
+													"});\r",
+													"\r",
+													"// Store the access_token in the TOKEN environment variable\r",
+													"var responseJSON = pm.response.json();\r",
+													"var api_key = responseJSON.api_key;\r",
+													"var api_user_id = responseJSON.id;\r",
+													"\r",
+													"if (api_key) {\r",
+													"    pm.environment.set(\"API_KEY\", api_key);\r",
+													"}\r",
+													"\r",
+													"if (api_user_id) {\r",
+													"    pm.environment.set(\"API_USER_ID\", api_user_id);\r",
+													"}\r",
+													"\r",
+													"pm.test(\"Api key is stored in environment variable\", function () {\r",
+													"    pm.expect(pm.environment.get(\"API_KEY\")).to.exist;\r",
+													"});\r",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {}
+											}
+										}
+									],
 									"request": {
 										"method": "POST",
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    \"name\": \"Portal preprod - 1\",\r\n    \"role\": \"client_admin\",\r\n    \"access\": \"write\",\r\n    \"expires\": \"1h\"\r\n}",
+											"raw": "{\r\n    \"name\": \"Portal preprod\",\r\n    \"role\": \"client_admin\",\r\n    \"access\": \"write\",\r\n    \"expires\": \"1h\"\r\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -136,7 +95,7 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    // \"name\": \"Portal preprod - 2\",\r\n    // \"role\": \"client_admin\",\r\n    // \"access\": \"write\",\r\n    // \"expires\": \"1d\",\r\n    \"lock\": false\r\n}",
+											"raw": "{\r\n    // \"name\": \"Portal preprod - 2\",\r\n    // \"role\": \"client_admin\",\r\n    \"access\": \"admin\",\r\n    // \"expires\": \"1d\",\r\n    \"lock\": false\r\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -144,7 +103,7 @@
 											}
 										},
 										"url": {
-											"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}/api-users/01924d07-c09a-72a2-bdf6-dcab4549df73",
+											"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}/api-users/{{API_USER_ID}}",
 											"host": [
 												"{{BASE_URL}}"
 											],
@@ -154,7 +113,7 @@
 												"clients",
 												"{{CLIENT_ID}}",
 												"api-users",
-												"01924d07-c09a-72a2-bdf6-dcab4549df73"
+												"{{API_USER_ID}}"
 											]
 										}
 									},
@@ -208,7 +167,7 @@
 											}
 										},
 										"url": {
-											"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}/api-users/01924cc8-958a-7223-acfd-a49e7223da71",
+											"raw": "{{BASE_URL}}/realms/{{REALM_ID}}/clients/{{CLIENT_ID}}/api-users/0192a464-1f55-7dc2-bf72-c61ea4351966",
 											"host": [
 												"{{BASE_URL}}"
 											],
@@ -218,7 +177,7 @@
 												"clients",
 												"{{CLIENT_ID}}",
 												"api-users",
-												"01924cc8-958a-7223-acfd-a49e7223da71"
+												"0192a464-1f55-7dc2-bf72-c61ea4351966"
 											]
 										}
 									},
@@ -716,6 +675,98 @@
 								"{{MASTER_CLIENT_ID}}",
 								"auth",
 								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response body has required properties\", function () {\r",
+									"    var responseJSON = pm.response.json();\r",
+									"    pm.expect(responseJSON).to.have.property('access_token');\r",
+									"    pm.expect(responseJSON).to.have.property('user');\r",
+									"    pm.expect(responseJSON).to.have.property('realm_id');\r",
+									"    pm.expect(responseJSON).to.have.property('client_id');\r",
+									"});\r",
+									"\r",
+									"// Store the access_token in the TOKEN environment variable\r",
+									"var responseJSON = pm.response.json();\r",
+									"var accessToken = responseJSON.access_token;\r",
+									"// var refreshToken = responseJSON.refresh_token;\r",
+									"var payload = accessToken.split('.')[1];\r",
+									"var decodedPayload = atob(payload);\r",
+									"var userId = JSON.parse(decodedPayload)?.sub;\r",
+									"\r",
+									"pm.environment.set(\"ACCESS_TOKEN\", accessToken);\r",
+									"// pm.environment.set(\"REFRESH_TOKEN\", refreshToken);\r",
+									"pm.environment.set(\"USER_ID\", userId);\r",
+									"pm.environment.set(\"REALM_ID\", responseJSON.realm_id);\r",
+									"pm.environment.set(\"CLIENT_ID\", responseJSON.client_id);\r",
+									"\r",
+									"pm.test(\"Access token is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"ACCESS_TOKEN\")).to.exist;\r",
+									"});\r",
+									"\r",
+									"// pm.test(\"Refresh token is stored in environment variable\", function () {\r",
+									"//     pm.expect(pm.environment.get(\"REFRESH_TOKEN\")).to.exist;\r",
+									"// });\r",
+									"\r",
+									"pm.test(\"User ID is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"USER_ID\")).to.exist;\r",
+									"})\r",
+									"pm.test(\"Realm ID is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"REALM_ID\")).to.exist;\r",
+									"})\r",
+									"pm.test(\"Client ID is stored in environment variable\", function () {\r",
+									"    pm.expect(pm.environment.get(\"CLIENT_ID\")).to.exist;\r",
+									"})\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Api-Key",
+								"value": "{{API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"refresh_token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3MjkzNTM1OTIsImlhdCI6MTcyOTM0OTk5MiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo1NTU1Iiwic2lkIjoiMDE5MjhiYWMtZjJlNy03MWMyLTkyOTktYzI3NTBhNWJiYjllIiwic3ViIjoiMDE5MmE1NGEtYmYzNy03MDYzLWFiYWYtNjZmMzU5MTkzMjFmIiwicmxpIjoiMDE5MjhiYWMtZjJlMi03ZDczLTgwMjgtMjcxYmM3NTE5ODgzIiwiY2xpIjoiMDE5MjhiYWMtZjJlMy03MGMwLTkyMTYtMjVmNGRkODA1MTlmIn0.ZEQPKT0TpxUBxbGp_5HDr3fqmPNSsw57HbHMT46TMg4\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/realms/{{MASTER_REALM_ID}}/clients/{{MASTER_CLIENT_ID}}/auth/refresh-token",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"realms",
+								"{{MASTER_REALM_ID}}",
+								"clients",
+								"{{MASTER_CLIENT_ID}}",
+								"auth",
+								"refresh-token"
 							]
 						}
 					},
