@@ -31,7 +31,7 @@ impl MigrationTrait for Migration {
                             .name("fk_session_refresh_token_id")
                             .from(Session::Table, Session::RefreshTokenId)
                             .to(RefreshToken::Table, RefreshToken::Id)
-                            .on_delete(ForeignKeyAction::SetNull),
+                            .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(ColumnDef::new(Session::UserId).uuid().not_null())
                     .foreign_key(

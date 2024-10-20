@@ -22,7 +22,7 @@ use crate::{
         jwt_token::{create, decode, JwtUser},
         settings::SETTINGS,
     },
-    services::user::insert_user,
+    services::{auth::handle_refresh_token, user::insert_user},
     utils::role_checker::{has_access_to_api_cred, is_current_realm_admin, is_master_realm_admin},
 };
 use axum::{extract::Path, Extension, Json};
@@ -438,99 +438,75 @@ pub async fn refresh_token(
     Path((realm_id, client_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<RefreshTokenRequest>,
 ) -> Result<Json<RefreshTokenResponse>, Error> {
-    if has_access_to_api_cred(&user, ApiUserRole::ClientAdmin, ApiUserAccess::Admin).await {
-        let token_data = decode_refresh_token(&payload.refresh_token, &SETTINGS.read().secrets.signing_key).expect("Failed to decode token");
-        if token_data.claims.rli != realm_id || token_data.claims.cli != client_id {
-            return Err(Error::Authenticate(AuthenticateError::InvalidToken));
-        }
-
-        let refresh_token = refresh_token::Entity::find_active_by_id(&state.db, token_data.claims.sub).await?;
-        if refresh_token.is_none() {
-            return Err(Error::not_found());
-        }
-        let client = client::Entity::find_active_by_id(&state.db, token_data.claims.cli).await?;
-        if client.is_none() {
-            return Err(Error::Authenticate(AuthenticateError::InvalidToken));
-        }
-
-        let refresh_token = refresh_token.unwrap();
-        let client = client.unwrap();
-
-        let refresh_token_model = if refresh_token.re_used_count >= client.refresh_token_reuse_limit {
-            let model = refresh_token::ActiveModel {
-                id: Set(Uuid::now_v7()),
-                user_id: Set(user.id),
-                client_id: Set(Some(client_id)),
-                realm_id: Set(realm_id),
-                re_used_count: Set(0),
-                locked_at: Set(None),
-                ..Default::default()
-            };
-            model.insert(&state.db).await?
-        } else {
-            let model = refresh_token::ActiveModel {
-                id: Set(refresh_token.id),
-                user_id: Set(refresh_token.user_id),
-                client_id: Set(refresh_token.client_id),
-                realm_id: Set(refresh_token.realm_id),
-                re_used_count: Set(refresh_token.re_used_count + 1),
-                locked_at: Set(None),
-                ..Default::default()
-            };
-            model.update(&state.db).await?
-        };
-
-        // Fetch user and resource groups
-        let user_with_resource_groups = user::Entity::find()
-            .filter(user::Column::Id.eq(refresh_token.user_id))
-            .find_also_related(resource_group::Entity)
-            .filter(resource_group::Column::RealmId.eq(realm_id))
-            .filter(resource_group::Column::ClientId.eq(client_id))
-            .one(&state.db)
-            .await?;
-
-        if user_with_resource_groups.is_none() {
-            debug!("No matching data found");
-            return Err(Error::not_found());
-        }
-
-        let (user, resource_groups) = user_with_resource_groups.unwrap();
-        if user.locked_at.is_some() {
-            debug!("User is locked");
-            return Err(Error::Authenticate(AuthenticateError::Locked));
-        }
-
-        if resource_groups.is_none() {
-            debug!("No matching resource group found");
-            return Err(Error::not_found());
-        }
-
-        let resource_groups = resource_groups.unwrap();
-        if resource_groups.locked_at.is_some() {
-            debug!("Resource group is locked");
-            return Err(Error::Authenticate(AuthenticateError::Locked));
-        }
-
-        let refresh_token_claims = RefreshTokenClaims::from(&refresh_token_model, &client);
-
-        let session = state
-            .db
-            .transaction(|txn| {
-                Box::pin(async move {
-                    Ok(create_session(&client, &user, resource_groups, session_info, Some(refresh_token.id), txn)
-                        .await
-                        .unwrap())
-                })
-            })
-            .await?;
-
-        let refresh_token = refresh_token_claims.create_token(&SETTINGS.read().secrets.signing_key).unwrap();
-        Ok(Json(RefreshTokenResponse {
-            access_token: session.access_token.clone(),
-            refresh_token,
-            expires_in: token_data.claims.exp - chrono::Local::now().timestamp() as usize,
-        }))
-    } else {
-        Err(Error::Authenticate(AuthenticateError::ActionForbidden))
+    if !has_access_to_api_cred(&user, ApiUserRole::ClientAdmin, ApiUserAccess::Admin).await {
+        debug!("No allowed access");
+        return Err(Error::Authenticate(AuthenticateError::ActionForbidden));
     }
+
+    let token_data = decode_refresh_token(&payload.refresh_token, &SETTINGS.read().secrets.signing_key).expect("Failed to decode token");
+    if token_data.claims.rli != realm_id || token_data.claims.cli != client_id {
+        return Err(Error::Authenticate(AuthenticateError::InvalidToken));
+    }
+
+    let refresh_token = refresh_token::Entity::find_active_by_id(&state.db, token_data.claims.sub).await?;
+    if refresh_token.is_none() {
+        return Err(Error::not_found());
+    }
+    let client = client::Entity::find_active_by_id(&state.db, token_data.claims.cli).await?;
+    if client.is_none() {
+        return Err(Error::Authenticate(AuthenticateError::InvalidToken));
+    }
+
+    let refresh_token = refresh_token.unwrap();
+    let client = client.unwrap();
+
+    // Fetch user and resource groups
+    let user_with_resource_groups = user::Entity::find()
+        .filter(user::Column::Id.eq(refresh_token.user_id))
+        .find_also_related(resource_group::Entity)
+        .filter(resource_group::Column::RealmId.eq(client.realm_id))
+        .filter(resource_group::Column::ClientId.eq(client.id))
+        .one(&state.db)
+        .await?;
+
+    if user_with_resource_groups.is_none() {
+        debug!("No matching data found");
+        return Err(Error::not_found());
+    }
+
+    let (user, resource_groups) = user_with_resource_groups.unwrap();
+    if user.locked_at.is_some() {
+        debug!("User is locked");
+        return Err(Error::Authenticate(AuthenticateError::Locked));
+    }
+
+    if resource_groups.is_none() {
+        debug!("No matching resource group found");
+        return Err(Error::not_found());
+    }
+
+    let resource_groups = resource_groups.unwrap();
+    if resource_groups.locked_at.is_some() {
+        debug!("Resource group is locked");
+        return Err(Error::Authenticate(AuthenticateError::Locked));
+    }
+
+    debug!("Before transaction calls");
+    Ok(state
+        .db
+        .transaction(|txn| {
+            Box::pin(async move {
+                let refresh_token_claims = handle_refresh_token(txn, &refresh_token, &client).await.unwrap();
+                let session = create_session(&client, &user, resource_groups, session_info, Some(refresh_token_claims.sub), txn)
+                    .await
+                    .unwrap();
+                let refresh_token = refresh_token_claims.create_token(&SETTINGS.read().secrets.signing_key).unwrap();
+                Ok(Json(RefreshTokenResponse {
+                    access_token: session.access_token.clone(),
+                    refresh_token,
+                    expires_in: token_data.claims.exp - chrono::Local::now().timestamp() as usize,
+                }))
+            })
+        })
+        .await?)
 }
