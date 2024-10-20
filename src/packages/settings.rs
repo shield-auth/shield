@@ -63,6 +63,9 @@ impl Settings {
 
         // Some cloud services like Heroku exposes a randomly assigned port in
         // the PORT env var and there is no way to change the env var name.
+        if let Ok(signing_key) = env::var("SIGNING_KEY") {
+            builder = builder.set_override("secrets.signing_key", signing_key)?;
+        }
         if let Ok(port) = env::var("PORT") {
             builder = builder.set_override("server.port", port)?;
         }
