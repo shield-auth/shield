@@ -1,0 +1,612 @@
+openapi: 3.0.0
+info:
+  title: Shield
+  version: 1.0.0
+servers:
+  - url: http://{{base_url}}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+security:
+  - bearerAuth: []
+tags:
+  - name: Realm
+  - name: Realm > Client
+  - name: Realm > Client > API User
+  - name: Realm > User
+  - name: Auth
+paths:
+  /realms/{REALM_ID}/clients/{CLIENT_ID}/api-users:
+    post:
+      tags:
+        - Realm > Client > API User
+      summary: Create API User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Portal preprod
+                role: client_admin
+                access: write
+                expires: 1h
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Realm > Client > API User
+      summary: Get API Users
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{REALM_ID}/clients/{CLIENT_ID}/api-users/{API_USER_ID}:
+    patch:
+      tags:
+        - Realm > Client > API User
+      summary: Update API User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example: "{\r\n    // \"name\": \"Portal preprod - 2\",\r\n    // \"role\": \"client_admin\",\r\n    \"access\": \"admin\",\r\n    // \"expires\": \"1d\",\r\n    \"lock\": false\r\n}"
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: API_USER_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{REALM_ID}/clients/{CLIENT_ID}/api-users/0192a464-1f55-7dc2-bf72-c61ea4351966:
+    delete:
+      tags:
+        - Realm > Client > API User
+      summary: Delete API User
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{REALM_ID}/clients:
+    get:
+      tags:
+        - Realm > Client
+      summary: Get Clients
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/019239c9-d69c-7cb5-ae6b-244997619778/clients/019239c9-d6a2-745c-96cd-d428cc716521:
+    get:
+      tags:
+        - Realm > Client
+      summary: Get Clients by ID
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Realm > Client
+      summary: Delete Client
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{REALM_ID}/clients/{CLIENT_ID}:
+    patch:
+      tags:
+        - Realm > Client
+      summary: Update Client
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example: "{\r\n    \"max_concurrent_sessions\": 3\r\n    // \"lock\": false\r\n}"
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{REALM_ID}/users:
+    get:
+      tags:
+        - Realm > User
+      summary: Get Users
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{REALM_ID}/users/{USER_ID}:
+    get:
+      tags:
+        - Realm > User
+      summary: Get Users by ID
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: USER_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Realm > User
+      summary: Delete User
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: USER_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/019239c9-d69c-7cb5-ae6b-244997619778/users/019239c9-d6aa-72c5-b0a0-0f8f17b846d9/resources:
+    get:
+      tags:
+        - Realm > User
+      summary: Get User Resources
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/019239c9-d69c-7cb5-ae6b-244997619778/users/019239e9-dc7c-79b0-a355-2b2ae5a2c1a1/resources:
+    post:
+      tags:
+        - Realm > User
+      summary: Add User Resources
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                group_id: 019239e9-dc80-7b9f-b2dc-efd65bae4b0e
+                identifiers:
+                  locker: test-locker-id
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/019239c9-d69c-7cb5-ae6b-244997619778/users/019239c9-d6aa-72c5-b0a0-0f8f17b846d9/resources/019239c9-d6b2-7c01-9ba9-7430fec4b18e:
+    patch:
+      tags:
+        - Realm > User
+      summary: Update User Resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: locker
+                value: new-locker-id
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/019239c9-d69c-7cb5-ae6b-244997619778/users/019239e9-dc7c-79b0-a355-2b2ae5a2c1a1/resources/019239c9-d6b2-7c01-9ba9-7430fec4b18e:
+    delete:
+      tags:
+        - Realm > User
+      summary: Delete User Resource
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms:
+    get:
+      tags:
+        - Realm
+      summary: Get Realms
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Realm
+      summary: Add Realm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: SocietyGEN
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{REALM_ID}:
+    get:
+      tags:
+        - Realm
+      summary: Get Realm by ID
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/019239dd-5485-776c-bb18-e569f92e612a:
+    patch:
+      tags:
+        - Realm
+      summary: Update Realm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: SocietyGEN Dev
+                lock: false
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/019239dd-eccd-7dc0-9cf1-487532d1ff96:
+    delete:
+      tags:
+        - Realm
+      summary: Delete Realm
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{REALM_ID}/clients/{CLIENT_ID}/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: appu@mksingh.in
+                password: "12345"
+                first_name: Appu
+                last_name: Singh
+                resource:
+                  group_name: AutomationTank
+                  identifiers:
+                    society: 01923863-ea6e-8679-7ec5-7c044ecd8895
+                    membership: 01923863-ea6e-7ec5-8679-7c044ecd8896
+                    employee: 01923863-ea6e-8679-7ec5-7c044ecd8897
+      parameters:
+        - name: REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{MASTER_REALM_ID}/clients/{MASTER_CLIENT_ID}/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example: "{\r\n    \"email\": \"admin@admin.com\",\r\n    // \"email\": \"appu@mksingh.in\",\r\n    \"password\": \"12345\"\r\n}"
+      parameters:
+        - name: MASTER_REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: MASTER_CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{MASTER_REALM_ID}/clients/{MASTER_CLIENT_ID}/auth/refresh-token:
+    post:
+      tags:
+        - Auth
+      summary: Refresh Token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                refresh_token: >-
+                  eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3MjkzNTM1OTIsImlhdCI6MTcyOTM0OTk5MiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo1NTU1Iiwic2lkIjoiMDE5MjhiYWMtZjJlNy03MWMyLTkyOTktYzI3NTBhNWJiYjllIiwic3ViIjoiMDE5MmE1NGEtYmYzNy03MDYzLWFiYWYtNjZmMzU5MTkzMjFmIiwicmxpIjoiMDE5MjhiYWMtZjJlMi03ZDczLTgwMjgtMjcxYmM3NTE5ODgzIiwiY2xpIjoiMDE5MjhiYWMtZjJlMy03MGMwLTkyMTYtMjVmNGRkODA1MTlmIn0.ZEQPKT0TpxUBxbGp_5HDr3fqmPNSsw57HbHMT46TMg4
+      parameters:
+        - name: Api-Key
+          in: header
+          schema:
+            type: string
+          example: "{{API_KEY}}"
+        - name: MASTER_REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: MASTER_CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{MASTER_REALM_ID}/clients/{MASTER_CLIENT_ID}/auth/logout:
+    get:
+      tags:
+        - Auth
+      summary: Logout Current Session
+      parameters:
+        - name: MASTER_REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: MASTER_CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Auth
+      summary: Logout One Session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                access_token: >-
+                  eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3Mjc2MjE3NjgsImlhdCI6MTcyNzYyMTQ2OCwic3ViIjoiMDE5MjNkZGQtNGFiOC03NzE3LTk5MjgtNWYzNDA0MGU4Y2ZlIiwic2lkIjoiMDE5MjNlNDMtOTEzYi03MzI4LTg2ZTMtNzIwZTNlNzljYjcxIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo1NTU1IiwiZmlyc3RfbmFtZSI6ImFkbWluQGFkbWluLmNvbSIsImxhc3RfbmFtZSI6IiIsImVtYWlsIjoiYWRtaW5AYWRtaW4uY29tIiwicGhvbmUiOiIiLCJyZXNvdXJjZSI6eyJjbGllbnRfaWQiOiIwMTkyM2RkZC00YWFlLTdlNGUtOWE3Zi1iOTU0NjBjNmYwODMiLCJjbGllbnRfbmFtZSI6ImNsaWVudCIsImdyb3VwX25hbWUiOiJkZWZhdWx0X3Jlc291cmNlX2dyb3VwIiwiaWRlbnRpZmllcnMiOnsicm9sZSI6ImFkbWluIiwicmVhbG0iOiIwMTkyM2RkZC00YWE4LTcwYWYtYjEzNC03YjRkNDBjNzc2MGQifX19.00MS10w-KHmz6hr4AT9MPvWy0VeDZbA_nVmmBgEcfYE
+      parameters:
+        - name: MASTER_REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: MASTER_CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{MASTER_REALM_ID}/clients/{MASTER_CLIENT_ID}/auth/introspect:
+    post:
+      tags:
+        - Auth
+      summary: Introspect Access Token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                access_token: >-
+                  eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3Mjc3MTkyOTYsImlhdCI6MTcyNzcxODk5Niwic3ViIjoiMDE5MjQ0MGItYjFjNi03OGQxLWI0ZWEtZjZkYzBmZGI0MmVkIiwic2lkIjoiMDE5MjQ0MGItYjFlYy03Y2MxLThkYmYtNTE0OWE0N2JiMDk0IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo1NTU1IiwiZmlyc3RfbmFtZSI6ImFkbWluQGFkbWluLmNvbSIsImxhc3RfbmFtZSI6IiIsImVtYWlsIjoiYWRtaW5AYWRtaW4uY29tIiwicGhvbmUiOiIiLCJyZXNvdXJjZSI6eyJjbGllbnRfaWQiOiIwMTkyNDQwYi1iMWI2LTdjYjEtOTllNS00ZjAzODk4NTYxN2MiLCJjbGllbnRfbmFtZSI6ImNsaWVudCIsImdyb3VwX25hbWUiOiJkZWZhdWx0X3Jlc291cmNlX2dyb3VwIiwiaWRlbnRpZmllcnMiOnsicm9sZSI6ImFkbWluIiwicmVhbG0iOiIwMTkyNDQwYi1iMWE2LTc5MTAtOWNkMy03ZDFiMWQxZmZmNjMifX19.X6pQtYHcktrtAUccPLR_SfNNzuox-JA8PbizdRLc2e8
+      parameters:
+        - name: MASTER_REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: MASTER_CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /realms/{MASTER_REALM_ID}/clients/{MASTER_CLIENT_ID}/auth/logout-all:
+    get:
+      tags:
+        - Auth
+      summary: Logout All Sessions - Current Client
+      parameters:
+        - name: MASTER_REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: MASTER_CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Auth
+      summary: Logout All Sessions - One Client
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                access_token: >-
+                  eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3Mjc2MjIxMDUsImlhdCI6MTcyNzYyMTgwNSwic3ViIjoiMDE5MjNkZGQtNGFiOC03NzE3LTk5MjgtNWYzNDA0MGU4Y2ZlIiwic2lkIjoiMDE5MjNlNDgtYjcxMS03NzZhLWIwOGEtZDhjOTg0YTBlNDI4IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo1NTU1IiwiZmlyc3RfbmFtZSI6ImFkbWluQGFkbWluLmNvbSIsImxhc3RfbmFtZSI6IiIsImVtYWlsIjoiYWRtaW5AYWRtaW4uY29tIiwicGhvbmUiOiIiLCJyZXNvdXJjZSI6eyJjbGllbnRfaWQiOiIwMTkyM2RkZC00YWFlLTdlNGUtOWE3Zi1iOTU0NjBjNmYwODMiLCJjbGllbnRfbmFtZSI6ImNsaWVudCIsImdyb3VwX25hbWUiOiJkZWZhdWx0X3Jlc291cmNlX2dyb3VwIiwiaWRlbnRpZmllcnMiOnsicmVhbG0iOiIwMTkyM2RkZC00YWE4LTcwYWYtYjEzNC03YjRkNDBjNzc2MGQiLCJyb2xlIjoiYWRtaW4ifX19._G0ujBxVZVwWoPvzY7qQePt3tMD7gMrBrUVhB5yVhCo
+      parameters:
+        - name: MASTER_REALM_ID
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: MASTER_CLIENT_ID
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
+  /health:
+    get:
+      tags:
+        - default
+      summary: Get Health
+      parameters:
+        - name: Api-Key
+          in: header
+          schema:
+            type: string
+          example: >-
+            01924d07-c09a-72a2-bdf6-dcab4549df73.B/vqBBCnR8Pt9sM4ZzXqLxU6QLlz7dQDe3i2yMmAwT9o/uXeKxZEYOzO6xCTvzPhHp7ach59GaT9ugrGZ+Bvmg==
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json: {}
